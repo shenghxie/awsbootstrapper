@@ -3,6 +3,7 @@ from ec2interface import EC2Interface
 from s3interface import S3Interface
 from manifest import Manifest
 from instancemanager import InstanceManager
+
 class Launcher(object):
     
     def __init__(self, instanceConfig, manifestPath, localWorkingDir):
@@ -28,8 +29,7 @@ class Launcher(object):
             self.s3interface.uploadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"], doc["LocalPath"])
 
     def runInstances(self):
-        return 
-        ############### temporarily disabled ############  self.ec2interface.launchInstances(self.instanceConfig["EC2settings"])
+        self.ec2interface.launchInstances(self.instanceConfig["EC2settings"])
 
 def main():
 
