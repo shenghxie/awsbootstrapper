@@ -11,15 +11,16 @@ class Launcher(object):
         self.manifest = Manifest(manifestPath)
         self.instanceConfig = instanceConfig
         s3 = boto3.resource('s3')
-        ec2 = boto3.resource('ec2', region_name=instanceConfig["Region"])
+        ec2 = boto3.resource('ec2', region_name=instanceConfig["EC2Config"]["Region"])
         self.s3interface = S3Interface(s3, self.manifest.GetBucketName(), localWorkingDir)
         self.instanceManager = InstanceManager(self.s3interface, self.manifest)
         self.manifestKey = "/".join([self.manifest.GetS3KeyPrefix(), "manifest.json"])
-        self.ec2interface = EC2Interface(ec2, instanceConfig["InstanceSettings"]["WorkingDirectory"], 
+        self.ec2interface = EC2Interface(ec2, instanceConfig["BootStrapperConfig"]["WorkingDirectory"], 
                                          self.manifest, self.manifestKey, self.instanceManager,
-                                         instanceConfig["InstanceSettings"]["BootStrapScriptPath"],
-                                         instanceConfig["InstanceSettings"]["LineBreak"],
-                                         instanceConfig["InstanceSettings"]["BootstrapCommands"])
+                                         instanceConfig["BootStrapperConfig"]["PythonPath"],
+                                         instanceConfig["BootStrapperConfig"]["BootStrapScriptPath"],
+                                         instanceConfig["BootStrapperConfig"]["LineBreak"],
+                                         instanceConfig["BootStrapperConfig"]["BootstrapCommands"])
 
     def uploadS3Documents(self):
         logging.info("uploading files to s3 bucket {0}".format(self.s3interface.bucketName))
@@ -30,7 +31,7 @@ class Launcher(object):
             self.s3interface.uploadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"], doc["LocalPath"])
 
     def runInstances(self):
-        self.ec2interface.launchInstances(self.instanceConfig["EC2settings"])
+        self.ec2interface.launchInstances(self.instanceConfig["EC2Config"]["InstanceConfig"])
 
 def main():
 

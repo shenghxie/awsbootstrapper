@@ -60,7 +60,8 @@ class EC2Interface_Test(unittest.TestCase):
             manifest = manifest, 
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
-            bootstrapScriptPath = "\path\to\script.py",
+            pythonpath="pythonpath",
+            bootstrapScriptPath = "/path/to/script.py",
             lineBreak="\r\n",
             bootstrapCommands = ["a","b","c"])
 
@@ -69,7 +70,8 @@ class EC2Interface_Test(unittest.TestCase):
         self.assertEqual(ec2interface.manifest, manifest)
         self.assertEqual(ec2interface.manifestKey, "key/to/manifest")
         self.assertEqual(ec2interface.instanceManager, instanceManager)
-        self.assertEqual(ec2interface.bootstrapScriptPath, "\path\to\script.py")
+        self.assertEqual(ec2interface.pythonpath, "pythonpath")
+        self.assertEqual(ec2interface.bootstrapScriptPath, "/path/to/script.py")
         self.assertEqual(ec2interface.lineBreak, "\r\n")
         self.assertEqual(ec2interface.bootstrapCommands, ["a","b","c"])
 
@@ -90,15 +92,16 @@ class EC2Interface_Test(unittest.TestCase):
             manifest = manifest, 
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
-            bootstrapScriptPath = "\path\to\script.py",
+            pythonpath="pythonpath",
+            bootstrapScriptPath = "/path/to/script.py",
             lineBreak = "\n",
             bootstrapCommands = ["$BootStrapScript", "extraCommand"])
 
         result = ec2interface.buildBootstrapCommand(1)
         self.assertEqual(result,
-                       "'\path\to\script.py' "+
-                       "--bucketName bucket "+
-                       "--manifestKey key/to/manifest "+
+                       "pythonpath '/path/to/script.py' "+
+                       "--bucketName 'bucket' "+
+                       "--manifestKey 'key/to/manifest' "+
                        "--instanceId 1 "+
                        "--localWorkingDir 'instanceLocalWorkingDir'" +
                        "\nextraCommand")
@@ -152,7 +155,8 @@ class EC2Interface_Test(unittest.TestCase):
             manifest = manifest, 
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
-            bootstrapScriptPath = "\path\to\script.py",
+            pythonpath="pythonpath",
+            bootstrapScriptPath = "/path/to/script.py",
             lineBreak = "\n",
             bootstrapCommands = ["$BootStrapScript", "extraCommand"])
 

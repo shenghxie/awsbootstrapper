@@ -3,27 +3,34 @@ from manifest import Manifest
 class EC2Interface(object):
     
     def __init__(self, ec2Resource, instanceLocalWorkingDir, manifest, 
-                 manifestKey, instanceManager, bootstrapScriptPath,
+                 manifestKey, instanceManager, pythonpath, bootstrapScriptPath,
                  lineBreak, bootstrapCommands):
         self.ec2Resource = ec2Resource
         self.instanceLocalWorkingDir = instanceLocalWorkingDir
         self.manifest = manifest
         self.manifestKey = manifestKey
         self.instanceManager = instanceManager
+        self.pythonpath = pythonpath
         self.bootstrapScriptPath = bootstrapScriptPath
         self.lineBreak = lineBreak
         self.bootstrapCommands = bootstrapCommands
 
     def launchInstance(self, config):
+        """launches an EC2 Instance base on the specified config
+        config -- a dictionary that will be converted to keyword args for the boto3 create_instances function
+        
+        see: http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.ServiceResource.create_instances
+        """
         instance = self.ec2Resource.create_instances(**config)
         return instance[0]
 
     def buildBootstrapCommand(self, instanceId):
-        bootstrapperCommand = ("'{scriptPath}' "+
-               "--bucketName {bucketName} "+
-               "--manifestKey {manifestKey} "+
+        bootstrapperCommand = ("{pythonpath} '{scriptPath}' "+
+               "--bucketName '{bucketName}' "+
+               "--manifestKey '{manifestKey}' "+
                "--instanceId {instanceId} "+
                "--localWorkingDir '{localWorkingDir}'").format(
+                   pythonpath=self.pythonpath,
                    scriptPath=self.bootstrapScriptPath,
                    bucketName=self.manifest.GetBucketName(),
                    manifestKey=self.manifestKey,
@@ -45,7 +52,6 @@ class EC2Interface(object):
             config["MaxCount"] = 1
             logging.info("launching instance {0}".format(config))
             instance = self.launchInstance(config)
-            
             instances[id] = instance
             ordered_instance_ids.append(id)
 
