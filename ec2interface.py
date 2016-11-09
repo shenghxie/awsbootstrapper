@@ -36,15 +36,18 @@ class EC2Interface(object):
                    manifestKey=self.manifestKey,
                    instanceId=instanceId,
                    localWorkingDir=self.instanceLocalWorkingDir)
-        for index,cmd in enumerate(self.bootstrapCommands):
+
+        finalCommands = list(self.bootstrapCommands)
+        for index,cmd in enumerate(finalCommands):
             if cmd == "$BootStrapScript":
-                self.bootstrapCommands[index] = bootstrapperCommand
-        return self.lineBreak.join(self.bootstrapCommands)
+                finalCommands[index] = bootstrapperCommand
+        return self.lineBreak.join(finalCommands)
 
     def launchInstances(self, config):
         instances = { }
         ordered_instance_ids = []
-        for job in self.manifest.GetJobs():
+        jobs = self.manifest.GetJobs()
+        for job in jobs:
             id = job["Id"]
             userdata = self.buildBootstrapCommand(id)
             config["UserData"] = userdata

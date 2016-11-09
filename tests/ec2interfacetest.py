@@ -97,12 +97,20 @@ class EC2Interface_Test(unittest.TestCase):
             lineBreak = "\n",
             bootstrapCommands = ["$BootStrapScript", "extraCommand"])
 
-        result = ec2interface.buildBootstrapCommand(1)
+        result = ec2interface.buildBootstrapCommand(1000)
         self.assertEqual(result,
                        "pythonpath '/path/to/script.py' "+
                        "--bucketName 'bucket' "+
                        "--manifestKey 'key/to/manifest' "+
-                       "--instanceId 1 "+
+                       "--instanceId 1000 "+
+                       "--localWorkingDir 'instanceLocalWorkingDir'" +
+                       "\nextraCommand")
+        result = ec2interface.buildBootstrapCommand(1001)
+        self.assertEqual(result,
+                       "pythonpath '/path/to/script.py' "+
+                       "--bucketName 'bucket' "+
+                       "--manifestKey 'key/to/manifest' "+
+                       "--instanceId 1001 "+
                        "--localWorkingDir 'instanceLocalWorkingDir'" +
                        "\nextraCommand")
 
