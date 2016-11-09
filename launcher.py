@@ -18,7 +18,8 @@ class Launcher(object):
         self.ec2interface = EC2Interface(ec2, instanceConfig["InstanceSettings"]["WorkingDirectory"], 
                                          self.manifest, self.manifestKey, self.instanceManager,
                                          instanceConfig["InstanceSettings"]["BootStrapScriptPath"],
-                                         instanceConfig["InstanceSettings"]["BootstrapCommandFormat"])
+                                         instanceConfig["InstanceSettings"]["LineBreak"],
+                                         instanceConfig["InstanceSettings"]["BootstrapCommands"])
 
     def uploadS3Documents(self):
         logging.info("uploading files to s3 bucket {0}".format(self.s3interface.bucketName))

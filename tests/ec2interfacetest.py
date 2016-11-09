@@ -61,7 +61,8 @@ class EC2Interface_Test(unittest.TestCase):
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
             bootstrapScriptPath = "\path\to\script.py",
-            bootstrapCommandFormat = "{0}\n")
+            lineBreak="\r\n",
+            bootstrapCommands = ["a","b","c"])
 
         self.assertEqual(ec2interface.ec2Resource, ec2Resource)
         self.assertEqual(ec2interface.instanceLocalWorkingDir, "instanceLocalWorkingDir")
@@ -69,7 +70,8 @@ class EC2Interface_Test(unittest.TestCase):
         self.assertEqual(ec2interface.manifestKey, "key/to/manifest")
         self.assertEqual(ec2interface.instanceManager, instanceManager)
         self.assertEqual(ec2interface.bootstrapScriptPath, "\path\to\script.py")
-        self.assertEqual(ec2interface.bootstrapCommandFormat, "{0}\n")
+        self.assertEqual(ec2interface.lineBreak, "\r\n")
+        self.assertEqual(ec2interface.bootstrapCommands, ["a","b","c"])
 
     def test_buildBootstrapCommand(self):
         ec2Resource = MockEC2Resource()
@@ -89,7 +91,8 @@ class EC2Interface_Test(unittest.TestCase):
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
             bootstrapScriptPath = "\path\to\script.py",
-            bootstrapCommandFormat = "{0}\nextraCommand")
+            lineBreak = "\n",
+            bootstrapCommands = ["$BootStrapScript", "extraCommand"])
 
         result = ec2interface.buildBootstrapCommand(1)
         self.assertEqual(result,
@@ -150,7 +153,8 @@ class EC2Interface_Test(unittest.TestCase):
             manifestKey = "key/to/manifest",
             instanceManager = instanceManager,
             bootstrapScriptPath = "\path\to\script.py",
-            bootstrapCommandFormat = "{0}\nextraCommand")
+            lineBreak = "\n",
+            bootstrapCommands = ["$BootStrapScript", "extraCommand"])
 
 
         ec2interface.launchInstances(self.args)

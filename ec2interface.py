@@ -4,14 +4,15 @@ class EC2Interface(object):
     
     def __init__(self, ec2Resource, instanceLocalWorkingDir, manifest, 
                  manifestKey, instanceManager, bootstrapScriptPath,
-                 bootstrapCommandFormat):
+                 lineBreak, bootstrapCommands):
         self.ec2Resource = ec2Resource
         self.instanceLocalWorkingDir = instanceLocalWorkingDir
         self.manifest = manifest
         self.manifestKey = manifestKey
         self.instanceManager = instanceManager
         self.bootstrapScriptPath = bootstrapScriptPath
-        self.bootstrapCommandFormat = bootstrapCommandFormat
+        self.lineBreak = lineBreak
+        self.bootstrapCommands = bootstrapCommands
 
     def launchInstance(self, config):
         instance = self.ec2Resource.create_instances(**config)
@@ -28,8 +29,10 @@ class EC2Interface(object):
                    manifestKey=self.manifestKey,
                    instanceId=instanceId,
                    localWorkingDir=self.instanceLocalWorkingDir)
-
-        return self.bootstrapCommandFormat.format(bootstrapperCommand)
+        for index,cmd in enumerate(self.bootstrapCommands):
+            if cmd == "$BootStrapScript":
+                self.bootstrapCommands[index] = bootstrapperCommand
+        return self.lineBreak.join(self.bootstrapCommands)
 
     def launchInstances(self, config):
         instances = { }

@@ -53,7 +53,7 @@ class AWSInstanceBootStrapper(object):
                 })
 
             try:
-                #http://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
+                # http://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
                 logging.info("issue command: {0}".format(command))
                 cmnd_output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, universal_newlines=True);
                 commandSummary[-1]["result"] = 0
