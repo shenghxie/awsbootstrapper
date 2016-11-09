@@ -30,7 +30,7 @@ class S3Interface(object):
             logging.info("archiving file '{0}' to '{1}'".format(pathToArchive, outputPath))
             with zipfile.ZipFile(outputPath, 'w', zipfile.ZIP_DEFLATED, True) as z:
                 z.write(pathToArchive, os.path.basename(pathToArchive))
-                with open(os.path.join(self.localTempDir, ), mode='w') as tmp:
+                with open(os.path.join(self.localTempDir, self.__singleFileFlag), mode='w') as tmp:
                     z.write(os.path.join(self.localTempDir, self.__singleFileFlag), self.__singleFileFlag)
             return outputPath
         else:
