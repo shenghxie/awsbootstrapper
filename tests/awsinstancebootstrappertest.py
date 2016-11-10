@@ -117,7 +117,7 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
     def test_RunCommands(self):
 
         def getJob(instanceId):
-            self.assertEqual(instanceId, 999)
+            self.assertEqual(instanceId, 9999)
             return {
                 "RequiredS3Data": ["doc1", "doc2", "doc3" ],
                 "Commands": [
@@ -132,17 +132,21 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         m.getjobOverride = getJob
         s = MockS3Interface()
         i = MockInstanceManager()
-        a = AWSInstanceBootStrapper(999, m, s, i, "logpath")
-        result = a.RunCommands()
-        self.assertTrue(len( result) == 1)
-        self.assertTrue(result[0]["result"] == 0)
-        self.assertTrue(result[0]["command"] == ["ls", "-l", "-h"])
-        self.assertTrue(result[0]["exception"] == None)
+        def uploadInstanceDataMock(instanceId, s3DocumentName, localPath):
+            self.UploadCalled = True
+            self.assertEqual(instanceId, 9999)
+            self.assertEqual(s3DocumentName, "logfilename", os.path.join("logpath","logfilename"))
 
-    def test_RunCommandRaisesErrorOnInvalidCommands(self):
+        i.uploadInstanceDataMock = uploadInstanceDataMock
+        a = AWSInstanceBootStrapper(9999, m, s, i, os.path.join("logpath","logfilename"))
+        result = a.RunCommands()
+        self.assertTrue(result)
+        self.assertTrue(self.UploadCalled)
+
+    def test_RunCommandReturnsFalseAndUploadsLogOnInvalidCommand(self):
 
         def getJob(instanceId):
-            self.assertEqual(instanceId, 999)
+            self.assertEqual(instanceId, 77)
             return {
                 "RequiredS3Data": ["doc1", "doc2", "doc3" ],
                 "Commands": [
@@ -157,11 +161,16 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         m.getjobOverride = getJob
         s = MockS3Interface()
         i = MockInstanceManager()
-        a = AWSInstanceBootStrapper(999, m, s, i, "logpath")
-        result = a.RunCommands()
-        self.assertTrue(result[0]["command"] == ["_an_invalid_command_", "-dosomething"])
-        self.assertTrue(result[0]["result"] != 0)
-        self.assertTrue(result[0]["exception"] != None)
+        def uploadInstanceDataMock(instanceId, s3DocumentName, localPath):
+            self.UploadCalled = True
+            self.assertEqual(instanceId, 77)
+            self.assertEqual(s3DocumentName, "logfilename", os.path.join("logpath","logfilename"))
+
+        i.uploadInstanceDataMock = uploadInstanceDataMock
+        a = AWSInstanceBootStrapper(77, m, s, i, os.path.join("logpath","logfilename"))
+        self.assertRaises(Exception, a.RunCommands)
+        self.assertTrue(self.UploadCalled)
+        
 
     def test_UploadS3Documents(self):
         m = MockManifest()

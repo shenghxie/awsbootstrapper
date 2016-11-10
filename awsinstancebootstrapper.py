@@ -2,10 +2,22 @@ import os, subprocess, logging
 
 
 class AWSInstanceBootStrapper(object):
-    # this class is to be executed on an aws instance
-    # it consumes the manifest and downloads files from 
-    # s3 accordingly, and then runs specified commands depending on the instance id
-    def __init__(self, instanceId, manifest, s3interface, instancemanager, logpath):
+    """ this class is to be executed on an aws instance
+    it consumes the manifest and downloads files from 
+    s3 accordingly, and then runs specified commands depending on the instance
+    id
+    """
+    def __init__(self, instanceId, manifest, s3interface, instancemanager, 
+                 logpath):
+        """Initialize AWSInstanceBootStrapper.
+
+        Args:
+            instanceId: the id of this instance as defined in the manifest
+            manifest: a Manifest object - describes the tasks and data for this instance
+            s3interface: a S3Interface object - used to upload and download data from the AWS S3 service
+            instancemanager: an InstanceManager object - used to upload logs and status data to S3
+            logpath: the path to the log file 
+        """
         self.instanceId = instanceId
         self.manifest = manifest
         self.s3interface = s3interface
@@ -15,10 +27,14 @@ class AWSInstanceBootStrapper(object):
         self.requiredS3Docs = self.job["RequiredS3Data"]
 
     def UploadLog(self):
+        """Uploads the log file to S3"""
         self.instancemanager.uploadInstanceData(
             self.instanceId, os.path.split(self.logpath)[1], self.logpath) 
 
     def DownloadS3Documents(self):
+        """ Downloads documents specified as required for this instance in the
+        manifest
+        """
         try:
             for documentName in self.requiredS3Docs:
                 documentData = self.manifest.GetS3Documents(
@@ -39,35 +55,40 @@ class AWSInstanceBootStrapper(object):
             self.UploadLog()
 
     def RunCommands(self):
-        commandSummary = []
+        """Run the commands specified for this instance in the manifest.
 
+        Returns:
+            True, if all commands executed sucessfully, otherwise an exception will be thrown
+        """
+        
         for c in self.job["Commands"]:
             command = [c["Command"]]
             args = c["Args"]
             command.extend(args)
-            commandSummary.append(
-                {
-                    "command": command,
-                    "result": None,
-                    "exception": None
-                })
 
             try:
                 # http://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
                 logging.info("issue command: {0}".format(command))
-                cmnd_output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, universal_newlines=True);
-                commandSummary[-1]["result"] = 0
-            except subprocess.CalledProcessError as ex:
+                cmnd_output = subprocess.check_output(command, 
+                                                      stderr=subprocess.STDOUT,
+                                                      shell=True, 
+                                                      universal_newlines=True);
+            except subprocess.CalledProcessError as cp_ex:
                 logging.exception("error occurred running command")
-                commandSummary[-1]["result"] = ex.returncode
-                commandSummary[-1]["exception"] = ex.output
-                logging.error(ex.output)
+                logging.error(cp_ex.output)
+                raise cp_ex
+            except Exception as ex:
+                logging.exception("error occurred running command")
+                raise ex
             finally:
                 self.UploadLog()
-        
-        return commandSummary
+
+        return True
 
     def UploadS3Documents(self):
+        """Upload the documents from this instance to S3 that are specified in
+        the manifest as required for this instance
+        """
         try:
             for documentName in self.requiredS3Docs:
                 documentData = self.manifest.GetS3Documents(
@@ -123,9 +144,13 @@ def main():
         s3interface.downloadFile(manifestKey, localManifestPath)
         manifest = Manifest(localManifestPath)
         instancemanager = InstanceManager(s3interface, manifest)
-        bootstrapper = AWSInstanceBootStrapper(instanceId, manifest, s3interface, instancemanager, logPath)
+        bootstrapper = AWSInstanceBootStrapper(instanceId,
+                                               manifest, 
+                                               s3interface, 
+                                               instancemanager,
+                                               logPath)
         bootstrapper.DownloadS3Documents()
-        commandResult = bootstrapper.RunCommands()
+        bootstrapper.RunCommands()
         bootstrapper.UploadS3Documents()
     except Exception as ex:
         logging.exception("error in bootstrapper")
