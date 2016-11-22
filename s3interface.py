@@ -68,7 +68,9 @@ class S3Interface(object):
 
     def downloadCompressed(self, keyNamePrefix, documentName, localPath):
         documentName = "{0}.{1}".format(documentName, self.__format)
-        archiveName =  os.path.join(self.localTempDir, documentName)
+        archiveName =  os.path.join(self.localTempDir, documentName.replace('/', '_'))
+        #for the above replace: if the documentname itself represents a nested S3 key, 
+        #convert it to something that can be written to file systems for the local temp file
         self.downloadFile("/".join([keyNamePrefix, documentName]), archiveName)
         self.unpackFileOrDirectory(archiveName, localPath)
         os.remove(archiveName)

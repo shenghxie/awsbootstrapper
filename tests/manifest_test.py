@@ -15,7 +15,13 @@ class Manifest_Test(unittest.TestCase):
 
     def test_ValidateDirectionReturnsExpectedValue(self):
         
-        m = Manifest(self.writeTestJsonFile({}))
+        m = Manifest(self.writeTestJsonFile({
+                "S3": 
+                {
+                    "BucketName": "myBucketName",
+                    "Documents":[]
+                }
+            }))
         self.assertFalse( m.validateDirection("a"))
         self.assertTrue(m.validateDirection("LocalToAWS")) 
         self.assertTrue(m.validateDirection("AWSToLocal"))
@@ -26,35 +32,50 @@ class Manifest_Test(unittest.TestCase):
             {
                 "S3": 
                 {
-                    "BucketName": "myBucketName"
+                    "BucketName": "myBucketName",
+                    "Documents":[]
                 }
             }))
         self.assertEqual( m.GetBucketName(), "myBucketName");
         
     def test_GetS3DocumentsThrowsErrorWithBadDirectionParameterInJson(self):
-        m = Manifest(self.writeTestJsonFile({
-        "S3": {
-        "ProjectName": "testProject",
-        "BucketName": "bucket",
-        "Documents": [
-          {
-            "Name": "document1",
-            "Direction": "InvalidDirection",
-            "LocalPath": "mylocalPath",
-            "AWSInstancePath": "awsinstancepath"
-          },
-        ]}}))
-        #see: http://stackoverflow.com/questions/9599610/how-to-use-unittests-self-assertraises-with-exceptions-in-a-generator-object
-        self.assertRaises(ValueError, lambda: list(m.GetS3Documents()))
+        with self.assertRaises(ValueError) as context:
+             Manifest(self.writeTestJsonFile({
+            "S3": {
+            "ProjectName": "testProject",
+            "BucketName": "bucket",
+            "Documents": [
+              {
+                "Name": "document1",
+                "Direction": "InvalidDirection",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+            ]}}))
+
+    def test_ConstructorRaisesErrorOnMissingLocalPath(self):
+        
+        with self.assertRaises(ValueError) as context:
+            Manifest(self.writeTestJsonFile({
+            "S3": {
+            "Documents": [
+              {
+                "Name": "document1",
+                "Direction": "LocalToAWS",
+                "LocalPath": "a_missing_path",
+                "AWSInstancePath": "awsinstancepath"
+              },
+            ]}}))
 
     def test_GetS3DocumentsThrowsErrorWithBadFilter(self):
+
         m = Manifest(self.writeTestJsonFile({
         "S3": {
         "Documents": [
           {
             "Name": "document1",
             "Direction": "LocalToAWS",
-            "LocalPath": "mylocalPath",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
         ]}}))
@@ -68,19 +89,19 @@ class Manifest_Test(unittest.TestCase):
           {
             "Name": "document1",
             "Direction": "LocalToAWS",
-            "LocalPath": "mylocalPath",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
           {
             "Name": "document2",
             "Direction": "AWSToLocal",
-            "LocalPath": "mylocalPath1",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath1"
           },
           {
             "Name": "document3",
             "Direction": "LocalToAWS",
-            "LocalPath": "mylocalPath2",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath2"
           },
         ]}}))
@@ -88,17 +109,17 @@ class Manifest_Test(unittest.TestCase):
         result = list(m.GetS3Documents())
         self.assertEqual(result[0]["Name"], "document1")
         self.assertEqual(result[0]["Direction"], "LocalToAWS")
-        self.assertEqual(result[0]["LocalPath"], "mylocalPath")
+        self.assertEqual(result[0]["LocalPath"], ".")
         self.assertEqual(result[0]["AWSInstancePath"], "awsinstancepath")
         
         self.assertEqual(result[1]["Name"], "document2")
         self.assertEqual(result[1]["Direction"], "AWSToLocal")
-        self.assertEqual(result[1]["LocalPath"], "mylocalPath1")
+        self.assertEqual(result[1]["LocalPath"], ".")
         self.assertEqual(result[1]["AWSInstancePath"], "awsinstancepath1")
 
         self.assertEqual(result[2]["Name"], "document3")
         self.assertEqual(result[2]["Direction"], "LocalToAWS")
-        self.assertEqual(result[2]["LocalPath"], "mylocalPath2")
+        self.assertEqual(result[2]["LocalPath"], ".")
         self.assertEqual(result[2]["AWSInstancePath"], "awsinstancepath2")
 
     def test_GetS3DocumentsReturnsFilteredDocuments(self):
@@ -108,19 +129,19 @@ class Manifest_Test(unittest.TestCase):
           {
             "Name": "document1",
             "Direction": "LocalToAWS",
-            "LocalPath": "mylocalPath",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
           {
             "Name": "document2",
             "Direction": "AWSToLocal",
-            "LocalPath": "mylocalPath",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
           {
             "Name": "document3",
             "Direction": "LocalToAWS",
-            "LocalPath": "mylocalPath",
+            "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
         ]}}))
@@ -236,13 +257,13 @@ class Manifest_Test(unittest.TestCase):
               {
                 "Name": "document1",
                 "Direction": "AWSToLocal",
-                "LocalPath": "mylocalPath",
+                "LocalPath": ".",
                 "AWSInstancePath": "awsinstancepath"
               },
               {
                 "Name": "document2",
                 "Direction": "LocalToAWS",
-                "LocalPath": "mylocalPath",
+                "LocalPath": ".",
                 "AWSInstancePath": "awsinstancepath"
               },
             ]},

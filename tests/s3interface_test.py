@@ -171,14 +171,14 @@ class S3Interface_Test(unittest.TestCase):
         try:
             def func(keyName, localPath):
                 ext = os.path.splitext(localPath)[1]
-                self.assertEqual(keyName,"keyPrefix/docName" + ext)
+                self.assertEqual(keyName,"keyPrefix/docpath/docName" + ext)
 
             s.bucket.bind_download_file_method(func)
             fn = os.path.join(compressPath,"tempfile")
             with open(fn, 'w') as f:
                 f.write("testfile contents")
-            name = s.archiveFileOrDirectory(fn, "docName") 
-            s.downloadCompressed("keyPrefix", "docName", os.path.join(extractPath,"tempfile"))
+            name = s.archiveFileOrDirectory(fn, "docpath_docName") 
+            s.downloadCompressed("keyPrefix", "docpath/docName", os.path.join(extractPath,"tempfile"))
             path = os.path.join(extractPath,"tempfile")
             with open(path, 'r') as f:
                self.assertEqual(f.read(), "testfile contents")
@@ -200,15 +200,15 @@ class S3Interface_Test(unittest.TestCase):
         try:
             def func(keyName, localPath):
                 ext = os.path.splitext(localPath)[1]
-                self.assertEqual(keyName,"keyPrefix/docName" + ext)
+                self.assertEqual(keyName,"keyPrefix/docpath/docName" + ext)
 
             s.bucket.bind_download_file_method(func)
 
             for i in range(1,10):
                 with open(os.path.join(compressPath,"tempfile{0}".format(i)), 'w') as f:
                     f.write("testfile contents {0}".format(i))
-            name = s.archiveFileOrDirectory(compressPath, "docName") 
-            s.downloadCompressed("keyPrefix", "docName", extractPath)
+            name = s.archiveFileOrDirectory(compressPath, "docpath_docName") 
+            s.downloadCompressed("keyPrefix", "docpath/docName", extractPath)
             for i in range(1,10):
                 with open(os.path.join(extractPath,"tempfile{0}".format(i)), 'r') as f:
                     self.assertEqual(f.read(), "testfile contents {0}".format(i))

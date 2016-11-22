@@ -1,4 +1,4 @@
-import json
+import json, os
 from sets import Set
 
 class Manifest(object):
@@ -14,6 +14,15 @@ class Manifest(object):
         s = self.__checkForDuplicateDocumentNames()
         self.__checkForDuplicateJobIds()
         self.__checkForMissingDocumentReferencedInJob(s)
+        self.__checkForMissingPathsInLocalFiles()
+
+    def __checkForMissingPathsInLocalFiles(self):
+        for doc in self.GetS3Documents(filter = {"Direction": "LocalToAWS"}):
+            if not os.path.exists(doc["LocalPath"]):
+                raise ValueError(
+                    "specified LocalToAWS local path does not exist '{0}'"
+                    .format(doc["LocalPath"]))
+
 
     def __checkForDuplicateDocumentNames(self):
         s = Set([])
