@@ -39,33 +39,22 @@ class Manifest_Test(unittest.TestCase):
         self.assertEqual( m.GetBucketName(), "myBucketName");
         
     def test_GetS3DocumentsThrowsErrorWithBadDirectionParameterInJson(self):
-        with self.assertRaises(ValueError) as context:
-             Manifest(self.writeTestJsonFile({
-            "S3": {
-            "ProjectName": "testProject",
-            "BucketName": "bucket",
-            "Documents": [
-              {
-                "Name": "document1",
-                "Direction": "InvalidDirection",
-                "LocalPath": ".",
-                "AWSInstancePath": "awsinstancepath"
-              },
-            ]}}))
-
-    def test_ConstructorRaisesErrorOnMissingLocalPath(self):
         
+        m = Manifest(self.writeTestJsonFile({
+        "S3": {
+        "ProjectName": "testProject",
+        "BucketName": "bucket",
+        "Documents": [
+        {
+        "Name": "document1",
+        "Direction": "InvalidDirection",
+        "LocalPath": ".",
+        "AWSInstancePath": "awsinstancepath"
+        },
+        ]}}))
+
         with self.assertRaises(ValueError) as context:
-            Manifest(self.writeTestJsonFile({
-            "S3": {
-            "Documents": [
-              {
-                "Name": "document1",
-                "Direction": "LocalToAWS",
-                "LocalPath": "a_missing_path",
-                "AWSInstancePath": "awsinstancepath"
-              },
-            ]}}))
+            m.GetS3Documents()
 
     def test_GetS3DocumentsThrowsErrorWithBadFilter(self):
 
