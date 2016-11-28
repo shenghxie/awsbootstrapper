@@ -26,7 +26,6 @@ def main():
         ec2 = boto3.resource('ec2', region_name=instanceConfig["EC2Config"]["Region"])
 
         app = Application(s3, manifestPath, localWorkingDir)
-        app.uploadS3Documents()
         app.runInstances(ec2, instanceConfig)
     except Exception as ex:
         logging.exception("error in launcher")
