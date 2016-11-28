@@ -22,7 +22,7 @@ def main():
         app.uploadS3Documents()
     except Exception as ex:
         logging.exception("error in launcher")
-        sys.exit(-1)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

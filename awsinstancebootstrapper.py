@@ -68,7 +68,7 @@ class AWSInstanceBootStrapper(object):
 
             try:
                 # http://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
-                logging.info("issue command: {0}".format(command))
+                logging.info("issuing command: {0}".format(command))
                 self.UploadLog()
                 cmnd_output = subprocess.check_output(command, 
                                                       stderr=subprocess.STDOUT,
@@ -129,6 +129,7 @@ def main():
     parser.add_argument("--localWorkingDir", help = "a directory to store working files, it will be created if it does not exist on the instance", required=True)
 
     try:
+        boto3.set_stream_logger(name='botocore')
         args = vars(parser.parse_args())
         bootstrapper = None
 
@@ -159,7 +160,7 @@ def main():
         logging.exception("error in bootstrapper")
         if bootstrapper is not None:
             bootstrapper.UploadLog()
-        sys.exit(-1)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

@@ -23,7 +23,7 @@ def main():
 
     except Exception as ex:
         logging.exception("error in downloader")
-        sys.exit(-1)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
