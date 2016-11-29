@@ -11,14 +11,14 @@ class powershell_s3(object):
             bucketName=self.bucketName,
             keyName=keyName,
             localPath=localPath)
-        execute(cmd)
+        self.execute(cmd)
 
     def upload_file(self, localPath, keyName):
         cmd = "powershell Write-S3Object -BucketName {bucketName} -File {localPath} -Key {keyName}".format(
             bucketName=self.bucketName,
             keyName=keyName,
             localPath=localPath)
-        execute(cmd)
+        self.execute(cmd)
 
     def execute(self, command):
         try:
