@@ -1,4 +1,4 @@
-import subprocess, logging
+import subprocess, logging, shutil, os
 
 class powershell_s3(object):
     """drop in replacement for boto3 s3 (windows only) which i cannot get working with userdata scripts..."""
@@ -15,12 +15,17 @@ class powershell_s3(object):
         self.execute(cmd)
 
     def upload_file(self, localPath, keyName):
+        # the Write-S3Object command appears to require a file that has no other processes touching it
+        # so make a copy
+        tmpFile = "{}.tmp".format(localPath)
+        shutil.copyfile(localPath, tmpFile)
         cmd = ['powershell', 
                'Write-S3Object', 
                '-BucketName', "'{}'".format(self.bucketName),
                '-File', "'{}'".format(localPath),
                '-Key', "'{}'".format(keyName)]
         self.execute(cmd)
+        os.remove(tmpFile)
 
     def execute(self, command):
         try:
