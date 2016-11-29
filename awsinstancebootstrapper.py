@@ -31,6 +31,8 @@ class AWSInstanceBootStrapper(object):
         self.instancemanager.uploadInstanceData(
             self.instanceId, os.path.split(self.logpath)[1], self.logpath) 
 
+
+
     def DownloadS3Documents(self):
         """ Downloads documents specified as required for this instance in the
         manifest
@@ -113,7 +115,9 @@ class AWSInstanceBootStrapper(object):
 
 def main():
     """to be run on by each instance as a startup command"""
-    import boto3, argparse, sys
+    import argparse, sys
+    #import boto3
+    from powershell_s3 import powershell_s3
     from s3interface import S3Interface
     from manifest import Manifest
     from instancemanager import InstanceManager
@@ -129,7 +133,7 @@ def main():
     parser.add_argument("--localWorkingDir", help = "a directory to store working files, it will be created if it does not exist on the instance", required=True)
 
     try:
-        boto3.set_stream_logger(name='botocore')
+        #boto3.set_stream_logger(name='botocore')
         args = vars(parser.parse_args())
         bootstrapper = None
 
@@ -143,8 +147,9 @@ def main():
         logPath = os.path.join(localWorkingDir, "log_instance{0}.txt".format(instanceId))
         LogHelper.start_logging(logPath)
         logging.info("startup")
-        logging.info("creating boto3 s3 resource")
-        s3 = boto3.resource('s3')
+        #logging.info("creating boto3 s3 resource")
+        #s3 = boto3.resource('s3')
+        s3 = powershell_s3()
         logging.info("creating S3Interface")
         s3interface = S3Interface(s3, bucketName, localWorkingDir)
 
