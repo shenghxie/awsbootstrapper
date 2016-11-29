@@ -10,7 +10,7 @@ class powershell_s3(object):
         cmd = ['powershell', 
                'Copy-S3Object', 
                '-BucketName', '"{}"'.format(self.bucketName),
-               '-File', '"{}"'.format(localPath),
+               '-LocalFile', '"{}"'.format(localPath),
                '-Key', '"{}"'.format(keyName)]
         self.execute(cmd)
 
