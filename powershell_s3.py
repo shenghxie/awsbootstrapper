@@ -7,17 +7,19 @@ class powershell_s3(object):
         return self
 
     def download_file(self, keyName, localPath):
-        cmd = 'Copy-S3Object -BucketName {bucketName} -Key "{keyName}" -LocalFile "{localPath}"'.format(
-            bucketName=self.bucketName,
-            keyName=keyName,
-            localPath=localPath)
+        cmd = ['powershell', 
+               'Copy-S3Object', 
+               '-BucketName', '"{bucketName}"'.format(self.bucketName),
+               '-File', '"{localPath}"'.format(localPath),
+               '-Key', '"{keyName}"'.format(keyName)]
         self.execute(cmd)
 
     def upload_file(self, localPath, keyName):
-        cmd = 'Write-S3Object -BucketName {bucketName} -File "{localPath}" -Key "{keyName}"'.format(
-            bucketName=self.bucketName,
-            keyName=keyName,
-            localPath=localPath)
+        cmd = ['powershell', 
+               'Write-S3Object', 
+               '-BucketName', '"{bucketName}"'.format(self.bucketName),
+               '-File', '"{localPath}"'.format(localPath),
+               '-Key', '"{keyName}"'.format(keyName)]
         self.execute(cmd)
 
     def execute(self, command):
