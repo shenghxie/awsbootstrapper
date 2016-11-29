@@ -22,7 +22,7 @@ class powershell_s3(object):
         cmd = ['powershell', 
                'Write-S3Object', 
                '-BucketName', "'{}'".format(self.bucketName),
-               '-File', "'{}'".format(localPath),
+               '-File', "'{}'".format(tmpFile),
                '-Key', "'{}'".format(keyName)]
         self.execute(cmd)
         os.remove(tmpFile)
