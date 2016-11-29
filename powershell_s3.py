@@ -1,4 +1,4 @@
-import subprocess
+import subprocess, logging
 
 class powershell_s3(object):
     """drop in replacement for boto3 s3 (windows only) which i cannot get working with userdata scripts..."""
