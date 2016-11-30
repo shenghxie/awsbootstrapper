@@ -116,8 +116,8 @@ class AWSInstanceBootStrapper(object):
 def main():
     """to be run on by each instance as a startup command"""
     import argparse, sys
-    #import boto3
-    from powershell_s3 import powershell_s3
+    import boto3
+    #from powershell_s3 import powershell_s3
     from s3interface import S3Interface
     from manifest import Manifest
     from instancemanager import InstanceManager
@@ -147,9 +147,9 @@ def main():
         logPath = os.path.join(localWorkingDir, "log_instance{0}.txt".format(instanceId))
         LogHelper.start_logging(logPath)
         logging.info("startup")
-        #logging.info("creating boto3 s3 resource")
-        #s3 = boto3.resource('s3')
-        s3 = powershell_s3()
+        logging.info("creating boto3 s3 resource")
+        s3 = boto3.resource('s3')
+        #s3 = powershell_s3()
         logging.info("creating S3Interface")
         s3interface = S3Interface(s3, bucketName, localWorkingDir)
 
