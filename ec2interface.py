@@ -65,11 +65,11 @@ class EC2Interface(object):
             instanceId: the id of the instance, as defined in the manifest, for
             which to build the bootstrap commands
         """
-        bootstrapperCommand = ("{pythonpath} '{scriptPath}' "+
-               "--bucketName '{bucketName}' "+
-               "--manifestKey '{manifestKey}' "+
-               "--instanceId {instanceId} "+
-               "--localWorkingDir '{localWorkingDir}'").format(
+        bootstrapperCommand = ('{pythonpath} "{scriptPath}" '+
+               '--bucketName "{bucketName}" '+
+               '--manifestKey "{manifestKey}" '+
+               '--instanceId {instanceId} '+
+               '--localWorkingDir "{localWorkingDir}"').format(
                    pythonpath=self.pythonpath,
                    scriptPath=self.bootstrapScriptPath,
                    bucketName=self.manifest.GetBucketName(),
