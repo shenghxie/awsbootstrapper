@@ -2,7 +2,7 @@ import logging
 class LogHelper(object):
 
     @staticmethod
-    def start_logging(fn=".\\script.log",fmode='w'):
+    def start_logging(fn=".\\script.log",fmode='w', use_console=True):
         #set up logging to print to console window and to log file
         #
         # From http://docs.python.org/2/howto/logging-cookbook.html#logging-cookbook
@@ -19,9 +19,9 @@ class LogHelper(object):
         fileHandler = logging.FileHandler(fn, fmode)
         fileHandler.setFormatter(logFormatter)
         rootLogger.addHandler(fileHandler)
-
-        consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(consoleHandler)
+        if use_console:
+            consoleHandler = logging.StreamHandler()
+            consoleHandler.setFormatter(logFormatter)
+            rootLogger.addHandler(consoleHandler)
 
         rootLogger.setLevel(logging.INFO)

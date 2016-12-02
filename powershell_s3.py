@@ -1,7 +1,7 @@
 import subprocess, logging, shutil, os
 
 class powershell_s3(object):
-    """drop in replacement for boto3 s3 (windows only) which i cannot get working with userdata scripts..."""
+    """drop in replacement for boto3 s3 (windows only)"""
     def Bucket(self, bucketName):
         self.bucketName = bucketName
         return self
