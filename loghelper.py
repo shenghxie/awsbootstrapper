@@ -25,3 +25,11 @@ class LogHelper(object):
             rootLogger.addHandler(consoleHandler)
 
         rootLogger.setLevel(logging.INFO)
+
+    @staticmethod
+    def instanceLogFileName(instanceId):
+        return "log_instance{0}.txt".format(instanceId)
+
+    @staticmethod
+    def instanceLogPath(workingdir, instanceId):
+        return os.path.join(workingdir, instanceLogFileName(instanceId))

@@ -7,8 +7,7 @@ class AWSInstanceBootStrapper(object):
     s3 accordingly, and then runs specified commands depending on the instance
     id
     """
-    def __init__(self, instanceId, manifest, s3interface, instancemanager, 
-                 logpath):
+    def __init__(self, instanceId, manifest, s3interface, instancemanager):
         """Initialize AWSInstanceBootStrapper.
 
         Args:
@@ -16,22 +15,17 @@ class AWSInstanceBootStrapper(object):
             manifest: a Manifest object - describes the tasks and data for this instance
             s3interface: a S3Interface object - used to upload and download data from the AWS S3 service
             instancemanager: an InstanceManager object - used to upload logs and status data to S3
-            logpath: the path to the log file 
         """
         self.instanceId = instanceId
         self.manifest = manifest
         self.s3interface = s3interface
         self.instancemanager = instancemanager
-        self.logpath = logpath
         self.job = self.manifest.GetJob(self.instanceId)
         self.requiredS3Docs = self.job["RequiredS3Data"]
 
     def UploadLog(self):
         """Uploads the log file to S3"""
-        self.instancemanager.uploadInstanceData(
-            self.instanceId, os.path.split(self.logpath)[1], self.logpath) 
-
-
+        self.instancemanager.uploadInstanceLog(self.instanceId)
 
     def DownloadS3Documents(self):
         """ Downloads documents specified as required for this instance in the
@@ -144,12 +138,12 @@ def main():
 
         if not os.path.exists(localWorkingDir):
             os.makedirs(localWorkingDir)
-        logPath = os.path.join(localWorkingDir, "log_instance{0}.txt".format(instanceId))
+        logPath = LogHelper.instanceLogPath(localWorkingDir, instanceId)
         LogHelper.start_logging(logPath)
         logging.info("startup")
         logging.info("creating boto3 s3 resource")
         s3 = boto3.resource('s3')
-        #s3 = powershell_s3()
+
         logging.info("creating S3Interface")
         s3interface = S3Interface(s3, bucketName, localWorkingDir)
 
@@ -161,8 +155,7 @@ def main():
         bootstrapper = AWSInstanceBootStrapper(instanceId,
                                                manifest, 
                                                s3interface, 
-                                               instancemanager,
-                                               logPath)
+                                               instancemanager)
         bootstrapper.DownloadS3Documents()
         bootstrapper.RunCommands()
         bootstrapper.UploadS3Documents()

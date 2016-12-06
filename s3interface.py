@@ -9,12 +9,14 @@ class S3Interface(object):
         self.__format = "zip"
         self.__singleFileFlag = "__is__single__file_archive__"
 
-    def downloadFile(self, keyName, localPath):
-        logging.info("downloading file from S3 '{0}' to '{1}'".format(keyName, localPath))
+    def downloadFile(self, keyName, localPath, logged=True):
+        if logged:
+            logging.info("downloading file from S3 '{0}' to '{1}'".format(keyName, localPath))
         self.bucket.download_file(keyName, localPath)
 
-    def uploadFile(self, localPath, keyName):
-        logging.info("uploading file '{0}' to S3 '{1}'".format(localPath, keyName))
+    def uploadFile(self, localPath, keyName, logged=True):
+        if logged:
+            logging.info("uploading file '{0}' to S3 '{1}'".format(localPath, keyName))
         self.bucket.upload_file(localPath, keyName)
 
     def archiveFileOrDirectory(self, pathToArchive, archiveName):

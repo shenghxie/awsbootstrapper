@@ -1,4 +1,5 @@
 import json, os
+from loghelper import LogHelper
 class InstanceManager(object):
 
     def __init__(self, s3Interface, manifest):
@@ -29,13 +30,28 @@ class InstanceManager(object):
         self.uploadInstanceData(instanceId, self.__metadataFileName, localMetaFile)
         os.remove(localMetaFile)
 
-    def uploadInstanceData(self, instanceId, s3DocumentName, localPath):
-        key = self.GetKeyPrefix(instanceId)
-        key = "/".join([key, s3DocumentName])
-        self.s3Interface.uploadFile(localPath, key)
+    def uploadInstanceLog(self, instanceId):
+        """
+        uploads the log file to the s3 key for the specified instance
+        """
+        s3DocumentName = LogHelper.instanceLogFilename(instanceId)
+        instanceLogPath = LogHelper.instanceLogPath(
+            self.s3Interface.localTempDir, instanceId)
+        self.uploadInstanceData(
+            self.instanceId, s3DocumentName, instanceLogPath, False)
+        
+    def downloadInstanceLog(self, instanceId, localDir):
+        s3DocumentName = LogHelper.instanceLogFilename(instanceId)
+        self.downloadInstanceData(instanceId, s3DocumentName, 
+                                  os.path.join(localDir, s3DocumentName))
 
-    def downloadInstanceData(self, instanceId, s3DocumentName, localPath):
+    def uploadInstanceData(self, instanceId, s3DocumentName, localPath, logged=True):
         key = self.GetKeyPrefix(instanceId)
         key = "/".join([key, s3DocumentName])
-        self.s3Interface.downloadFile(key, localPath)
+        self.s3Interface.uploadFile(localPath, key, logged)
+
+    def downloadInstanceData(self, instanceId, s3DocumentName, localPath, logged=True):
+        key = self.GetKeyPrefix(instanceId)
+        key = "/".join([key, s3DocumentName])
+        self.s3Interface.downloadFile(key, localPath, logged)
 
