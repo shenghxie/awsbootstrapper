@@ -1,4 +1,4 @@
-import logging
+import logging, os
 class LogHelper(object):
 
     @staticmethod
@@ -32,4 +32,4 @@ class LogHelper(object):
 
     @staticmethod
     def instanceLogPath(workingdir, instanceId):
-        return os.path.join(workingdir, instanceLogFileName(instanceId))
+        return os.path.join(workingdir, LogHelper.instanceLogFileName(instanceId))

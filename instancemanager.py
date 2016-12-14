@@ -34,14 +34,14 @@ class InstanceManager(object):
         """
         uploads the log file to the s3 key for the specified instance
         """
-        s3DocumentName = LogHelper.instanceLogFilename(instanceId)
+        s3DocumentName = LogHelper.instanceLogFileName(instanceId)
         instanceLogPath = LogHelper.instanceLogPath(
             self.s3Interface.localTempDir, instanceId)
         self.uploadInstanceData(
-            self.instanceId, s3DocumentName, instanceLogPath, False)
+            instanceId, s3DocumentName, instanceLogPath, False)
         
     def downloadInstanceLog(self, instanceId, localDir):
-        s3DocumentName = LogHelper.instanceLogFilename(instanceId)
+        s3DocumentName = LogHelper.instanceLogFileName(instanceId)
         self.downloadInstanceData(instanceId, s3DocumentName, 
                                   os.path.join(localDir, s3DocumentName))
 
