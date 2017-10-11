@@ -16,11 +16,8 @@ class Manifest_Test(unittest.TestCase):
     def test_ValidateDirectionReturnsExpectedValue(self):
         
         m = Manifest(self.writeTestJsonFile({
-                "S3": 
-                {
-                    "BucketName": "myBucketName",
-                    "Documents":[]
-                }
+                "BucketName": "myBucketName",
+                "Documents":[]
             }))
         self.assertFalse( m.validateDirection("a"))
         self.assertTrue(m.validateDirection("LocalToAWS")) 
@@ -30,18 +27,14 @@ class Manifest_Test(unittest.TestCase):
     def test_GetBucketName(self):
         m = Manifest(self.writeTestJsonFile(
             {
-                "S3": 
-                {
-                    "BucketName": "myBucketName",
-                    "Documents":[]
-                }
+                "BucketName": "myBucketName",
+                "Documents":[]
             }))
         self.assertEqual( m.GetBucketName(), "myBucketName");
         
     def test_GetS3DocumentsThrowsErrorWithBadDirectionParameterInJson(self):
         
         m = Manifest(self.writeTestJsonFile({
-        "S3": {
         "ProjectName": "testProject",
         "BucketName": "bucket",
         "Documents": [
@@ -51,7 +44,7 @@ class Manifest_Test(unittest.TestCase):
         "LocalPath": ".",
         "AWSInstancePath": "awsinstancepath"
         },
-        ]}}))
+        ]}))
 
         with self.assertRaises(ValueError) as context:
             m.GetS3Documents()
@@ -59,7 +52,6 @@ class Manifest_Test(unittest.TestCase):
     def test_GetS3DocumentsThrowsErrorWithBadFilter(self):
 
         m = Manifest(self.writeTestJsonFile({
-        "S3": {
         "Documents": [
           {
             "Name": "document1",
@@ -67,13 +59,12 @@ class Manifest_Test(unittest.TestCase):
             "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
-        ]}}))
+        ]}))
         self.assertRaises(KeyError, 
                           lambda: list(m.GetS3Documents(filter={"nonmatchingkey": "value"})))
 
     def test_GetS3DocumentsReturnsExpectedValue(self):
         m = Manifest(self.writeTestJsonFile({
-        "S3": {
         "Documents": [
           {
             "Name": "document1",
@@ -93,7 +84,7 @@ class Manifest_Test(unittest.TestCase):
             "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath2"
           },
-        ]}}))
+        ]}))
 
         result = list(m.GetS3Documents())
         self.assertEqual(result[0]["Name"], "document1")
@@ -113,7 +104,6 @@ class Manifest_Test(unittest.TestCase):
 
     def test_GetS3DocumentsReturnsFilteredDocuments(self):
         m = Manifest(self.writeTestJsonFile({
-        "S3": {
         "Documents": [
           {
             "Name": "document1",
@@ -133,7 +123,7 @@ class Manifest_Test(unittest.TestCase):
             "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
-        ]}}))
+        ]}))
 
         result = list(m.GetS3Documents(filter={"Direction": "LocalToAWS"}))
         self.assertEqual(result[0]["Name"], "document1")
@@ -141,7 +131,6 @@ class Manifest_Test(unittest.TestCase):
 
     def test_errorThrownOnDuplicateDocumentNames(self):
         self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
-            "S3": {
             "ProjectName": "testProject",
             "BucketName": "bucket",
             "Documents": [
@@ -157,11 +146,10 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]}})))
+            ]})))
 
     def test_errorThrownOnDuplicateJobIds(self):
         self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
-            "S3": {
             "ProjectName": "testProject",
             "BucketName": "bucket",
             "Documents": [
@@ -171,7 +159,7 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]},
+            ],
             "InstanceJobs": [
             {
               "Id": 1,
@@ -187,7 +175,6 @@ class Manifest_Test(unittest.TestCase):
 
     def test_errorThrownOnMissingRequiredS3DataInJob(self):
         self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
-            "S3": {
             "ProjectName": "testProject",
             "BucketName": "bucket",
             "Documents": [
@@ -197,7 +184,7 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]},
+            ],
             "InstanceJobs": [
             {
               "Id": 1,
@@ -208,7 +195,6 @@ class Manifest_Test(unittest.TestCase):
 
     def test_GetJobThrowsErrorOnMissingJobId(self):
         m = Manifest(self.writeTestJsonFile({
-            "S3": {
             "ProjectName": "testProject",
             "BucketName": "bucket",
             "Documents": [
@@ -218,7 +204,7 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]},
+            ],
             "InstanceJobs": [
             {
               "Id": 1,
@@ -239,7 +225,6 @@ class Manifest_Test(unittest.TestCase):
 
     def test_GetJobReturnsExpectedValues(self):
         m = Manifest(self.writeTestJsonFile({
-            "S3": {
             "ProjectName": "testProject",
             "BucketName": "bucket",
             "Documents": [
@@ -255,7 +240,7 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": ".",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]},
+            ],
             "InstanceJobs": [
             {
               "Id": 1,

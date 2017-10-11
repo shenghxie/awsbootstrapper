@@ -17,8 +17,8 @@ class Manifest(object):
 
     def __checkForDuplicateDocumentNames(self):
         s = Set([])
-        if "S3" in self.data and "Documents" in self.data["S3"]:
-            for doc in self.data["S3"]["Documents"]:
+        if "Documents" in self.data:
+            for doc in self.data["Documents"]:
                 name = doc["Name"]
                 if name in s:
                     raise ValueError("duplicate document name detected in manifest '{0}'"
@@ -54,13 +54,13 @@ class Manifest(object):
             return False
 
     def GetBucketName(self):
-        return self.data["S3"]["BucketName"]
+        return self.data["BucketName"]
 
     def GetS3Documents(self, filter=None):
         """get the sequence of S3 documents to process using the specified
         optional filters"""
         matches = []
-        for doc in self.data["S3"]["Documents"]:
+        for doc in self.data["Documents"]:
             if not self.validateDirection(doc["Direction"]):
                 raise ValueError("specified direction should be one of {0}"
                              .format(",".join(self.validDirections)))
@@ -86,7 +86,7 @@ class Manifest(object):
 
     def GetS3KeyPrefix(self):
         """constructs the "directory" in S3 in which the documents are stored"""
-        root = self.data["S3"]["ProjectName"]
+        root = self.data["ProjectName"]
         return root
 
     def GetJobs(self):
