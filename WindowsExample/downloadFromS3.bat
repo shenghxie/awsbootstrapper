@@ -1,0 +1,1 @@
+c:\python27\python.exe ..\downloader.py --manifestPath ./manifest.json --localWorkingDir ./temp

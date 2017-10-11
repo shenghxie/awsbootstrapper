@@ -1,0 +1,35 @@
+{
+    "S3": {
+        "ProjectName": "AWSBootstrapperWindowsExample", 
+        "BucketName": "my_bucket", 
+        "Documents": [
+            {
+                "Direction": "LocalToAWS", 
+                "AWSInstancePath": "C:\\work\\input", 
+                "Name": "input", 
+                "LocalPath": ".\\input"
+            }, 
+            {
+                "Direction": "AWSToLocal", 
+                "AWSInstancePath": "C:\\work\\output", 
+                "Name": "output", 
+                "LocalPath": ".\\output"
+            }
+        ]
+    }, 
+    "InstanceJobs": [
+        {
+            "Id": 1,
+            "Commands": [
+                {
+                    "Args": [ "hello world", "c:\\work\\output\\helloworld.txt" ], 
+                    "Command": "c:\\work\\input\\instanceJob.bat"
+                }
+            ], 
+            "RequiredS3Data": [
+                "input",
+                "output"
+            ]
+       }
+    ]
+}

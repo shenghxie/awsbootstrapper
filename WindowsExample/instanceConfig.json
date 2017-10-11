@@ -1,0 +1,27 @@
+{
+  "EC2Config": {
+    "Region": "ca-central-1",
+    "InstanceConfig": {
+      "ImageId": "ami-xxxxxxxx",
+      "InstanceType": "t2.micro",
+      "IamInstanceProfile": {
+        "Name": "fullAccessToS3"
+      },
+      "InstanceInitiatedShutdownBehavior": "terminate"
+    }
+  },
+  "BootStrapperConfig": {
+    "WorkingDirectory": "c:\\work",
+    "PythonPath": "c:\\python27\\python.exe",
+    "BootStrapScriptPath": "c:\\work\\AWSBootStrapper\\awsinstancebootstrapper.py",
+    "LineBreak": "\n",
+    "BootstrapCommands": [
+      "<script>",
+      "mkdir c:\\work\\output",
+      "git.exe clone --recursive -v https://github.com/smorken/awsbootstrapper.git c:\\work\\AWSBootStrapper",
+      "$BootStrapScript",
+      "shutdown /s",
+      "</script>"
+    ]
+  }
+}

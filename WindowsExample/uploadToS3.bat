@@ -1,0 +1,1 @@
+c:\python27\python.exe ..\uploader.py --manifestPath ./manifest.json --localWorkingDir ./temp
