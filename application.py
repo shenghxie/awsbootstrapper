@@ -1,4 +1,4 @@
-import logging
+import logging, os
 from ec2interface import EC2Interface
 from s3interface import S3Interface
 from manifest import Manifest
@@ -17,7 +17,8 @@ class Application(object):
         logging.info("downloading files from s3 bucket {0}".format(self.s3interface.bucketName))
 
         for doc in self.manifest.GetS3Documents(filter = {"Direction": "AWSToLocal"}):
-            self.s3interface.downloadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"], doc["LocalPath"])
+            self.s3interface.downloadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"],
+                                                os.path.abspath(doc["LocalPath"]))
 
     def uploadS3Documents(self):
         logging.info("uploading files to s3 bucket {0}".format(self.s3interface.bucketName))
@@ -25,7 +26,8 @@ class Application(object):
         self.s3interface.uploadFile(self.manifestPath, self.manifestKey)
 
         for doc in self.manifest.GetS3Documents(filter = {"Direction": "LocalToAWS"}):
-            self.s3interface.uploadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"], doc["LocalPath"])
+            self.s3interface.uploadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"],
+                                              os.path.abspath(doc["LocalPath"]))
 
     def runInstances(self, ec2, instanceConfig):
         ec2interface = EC2Interface(ec2, instanceConfig["BootStrapperConfig"]["WorkingDirectory"], 
