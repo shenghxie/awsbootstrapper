@@ -19,6 +19,7 @@ class Application(object):
         for doc in self.manifest.GetS3Documents(filter = {"Direction": "AWSToLocal"}):
             self.s3interface.downloadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"],
                                                 os.path.abspath(doc["LocalPath"]))
+        logging.info("downloading finished")
 
     def uploadS3Documents(self):
         logging.info("uploading files to s3 bucket {0}".format(self.s3interface.bucketName))
@@ -28,6 +29,7 @@ class Application(object):
         for doc in self.manifest.GetS3Documents(filter = {"Direction": "LocalToAWS"}):
             self.s3interface.uploadCompressed(self.manifest.GetS3KeyPrefix(), doc["Name"],
                                               os.path.abspath(doc["LocalPath"]))
+        logging.info("uploading finished")
 
     def runInstances(self, ec2, instanceConfig):
         ec2interface = EC2Interface(ec2, instanceConfig["BootStrapperConfig"]["WorkingDirectory"], 
@@ -37,3 +39,4 @@ class Application(object):
                                      instanceConfig["BootStrapperConfig"]["LineBreak"],
                                      instanceConfig["BootStrapperConfig"]["BootstrapCommands"])
         ec2interface.launchInstances(instanceConfig["EC2Config"]["InstanceConfig"])
+        logging.info("ec2 launch finished")
