@@ -124,22 +124,6 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         
         m.GetS3KeyPrefix.return_value = "prefix"
 
-        #def uploadCompressed(keyNamePrefix, documentName, localDir):
-        #    self.uploadCompressedWasCalled = True
-        #    self.assertEqual(keyNamePrefix, GetPrefixOverride())
-        #    self.assertTrue(documentName not in ["doc1", "doc3"]) # doc1 and doc3 are downloadable
-        #    self.assertEqual(documentName, "doc2") # doc 2 is upload from instance only
-        #    self.assertEqual(localDir, "AWSInstancePath")
-
-        #s = MockS3Interface()
-        #s.uploadCompressed = uploadCompressed
-
-        #i = MockInstanceManager()
-        #def uploadInstanceLog(instanceId):
-        #    self.uploadLogCalled = True
-        #    self.assertTrue(instanceId == 999)
-
-        #i.uploadInstanceLogMock = uploadInstanceLog
         a = AWSInstanceBootStrapper(101, m, s, i)
         a.UploadS3Documents()
         s.uploadCompressed.assert_has_calls([

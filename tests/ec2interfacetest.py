@@ -1,7 +1,13 @@
 import unittest
 from ec2interface import EC2Interface
+from manifest import Manifest
+from instancemanager import InstanceManager
+from mock import Mock, call
 
 class MockEC2Instance(object):
+    '''
+    boto3 objects runtime types and not mockable directly
+    '''
     def __init__(self):
         self.wait_until_running_override = lambda : None
         self.create_tags_override = lambda Tags: None
@@ -16,43 +22,21 @@ class MockEC2Instance(object):
         return self.create_tags_override(Tags)
 
 class MockEC2Resource(object):
-
+    '''
+    boto3 objects runtime types and not mockable directly
+    '''
     def __init__(self):
         self.create_instances_func = lambda **args : None
 
     def create_instances(self, **args):
         return self.create_instances_func(**args)
 
-class MockManifest(object):
-    
-    def __init__(self):
-        self.getjobsOverride = lambda: None
-        self.GetBucketNameOverride = lambda : None
-        self.GetS3KeyPrefixOverride = lambda : None
-
-    def GetJobs(self):
-        return self.getjobsOverride()
-    
-    def GetBucketName(self):
-        return self.GetBucketNameOverride()
-
-    def GetS3KeyPrefix(self):
-        return self.GetS3KeyPrefixOverride()
-
-class MockInstanceManager(object):
-
-    def __init__(self):
-        self.publishinstanceoverride = lambda id, instance: None
-
-    def publishInstance(self, id, instance):
-        return self.publishinstanceoverride(id, instance)
-
 class EC2Interface_Test(unittest.TestCase):
     
     def test_constructor(self):
         ec2Resource = MockEC2Resource()
-        manifest = MockManifest()
-        instanceManager = MockInstanceManager()
+        manifest = Mock(spec = Manifest)
+        instanceManager = Mock(spec = InstanceManager)
 
         ec2interface = EC2Interface(
             ec2Resource=ec2Resource, 
@@ -77,14 +61,12 @@ class EC2Interface_Test(unittest.TestCase):
 
     def test_buildBootstrapCommand(self):
         ec2Resource = MockEC2Resource()
-        manifest = MockManifest()
-
+        manifest = Mock(spec = Manifest)
+        instanceManager = Mock(spec = InstanceManager)
         def GetBucketNameOverride():
             return "bucket"
 
-        manifest.GetBucketNameOverride = GetBucketNameOverride
-
-        instanceManager = MockInstanceManager()
+        manifest.GetBucketName.side_effect = lambda: "bucket"
 
         ec2interface = EC2Interface(
             ec2Resource=ec2Resource, 
@@ -136,26 +118,19 @@ class EC2Interface_Test(unittest.TestCase):
 
         ec2Resource.create_instances_func = create_instances
 
-        manifest = MockManifest()
+        manifest = Mock(spec = Manifest)
 
-        def GetBucketNameOverride():
-            return "bucket"
-        manifest.GetBucketNameOverride = GetBucketNameOverride
-        def GetS3KeyPrefix():
-            return "prefix"
-        manifest.GetS3KeyPrefixOverride = GetS3KeyPrefix
+        manifest.GetBucketName.side_effect = lambda : "bucket"
+        manifest.GetS3KeyPrefix.side_effect = lambda : "prefix"
 
-        def GetJobs():
-            return [ {"Id": 1}, {"Id": 2}, {"Id": 3} ]
-        manifest.getjobsOverride = GetJobs
+        manifest.GetJobs.side_effect = lambda : [ {"Id": 1}, {"Id": 2}, {"Id": 3} ]
 
-        instanceManager = MockInstanceManager()
-        def publishInstance(id, instance):
-            self.assertTrue(instance.waitCalled)
-            self.assertTrue(instance.Tags[0]["Key"] == "Name")
-            self.assertTrue(instance.Tags[0]["Value"] == "{0}[{1}]".format(GetS3KeyPrefix(),id))
+        instanceManager = Mock(spec = InstanceManager)
 
-        instanceManager.publishinstanceoverride = publishInstance
+        instanceManager.publishInstance.side_effect = lambda id, instance : (
+            self.assertTrue(id in [1,2,3]),
+            self.assertTrue(instance.Tags == [{'Key': 'Name', 'Value': 'prefix[{0}]'.format(id)}])
+        )
 
         ec2interface = EC2Interface(
             ec2Resource=ec2Resource, 
@@ -170,7 +145,8 @@ class EC2Interface_Test(unittest.TestCase):
 
 
         ec2interface.launchInstances(self.args)
-
+        instanceManager.publishInstance.assert_called()
+        manifest.GetJobs.assert_called()
 
 if __name__ == '__main__':
     unittest.main()
