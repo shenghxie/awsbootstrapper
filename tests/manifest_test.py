@@ -16,8 +16,10 @@ class Manifest_Test(unittest.TestCase):
     def test_ValidateDirectionReturnsExpectedValue(self):
         
         m = Manifest(self.writeTestJsonFile({
+                "ProjectName": "projectname",
                 "BucketName": "myBucketName",
-                "Documents":[]
+                "Documents":[],
+                "InstanceJobs": []
             }))
         self.assertFalse( m.validateDirection("a"))
         self.assertTrue(m.validateDirection("LocalToAWS")) 
@@ -27,8 +29,10 @@ class Manifest_Test(unittest.TestCase):
     def test_GetBucketName(self):
         m = Manifest(self.writeTestJsonFile(
             {
+                "ProjectName": "projectname",
                 "BucketName": "myBucketName",
-                "Documents":[]
+                "Documents":[],
+                "InstanceJobs": []
             }))
         self.assertEqual( m.GetBucketName(), "myBucketName");
         
@@ -43,8 +47,9 @@ class Manifest_Test(unittest.TestCase):
         "Direction": "InvalidDirection",
         "LocalPath": ".",
         "AWSInstancePath": "awsinstancepath"
-        },
-        ]}))
+        }],
+        "InstanceJobs": []
+        }))
 
         with self.assertRaises(ValueError) as context:
             m.GetS3Documents()
@@ -52,6 +57,8 @@ class Manifest_Test(unittest.TestCase):
     def test_GetS3DocumentsThrowsErrorWithBadFilter(self):
 
         m = Manifest(self.writeTestJsonFile({
+        "ProjectName": "projectname",
+        "BucketName": "bucket",
         "Documents": [
           {
             "Name": "document1",
@@ -59,12 +66,15 @@ class Manifest_Test(unittest.TestCase):
             "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath"
           },
-        ]}))
+        ],
+        "InstanceJobs": []}))
         self.assertRaises(KeyError, 
                           lambda: list(m.GetS3Documents(filter={"nonmatchingkey": "value"})))
 
     def test_GetS3DocumentsReturnsExpectedValue(self):
         m = Manifest(self.writeTestJsonFile({
+        "ProjectName": "projectname",
+        "BucketName": "bucket",
         "Documents": [
           {
             "Name": "document1",
@@ -84,7 +94,9 @@ class Manifest_Test(unittest.TestCase):
             "LocalPath": ".",
             "AWSInstancePath": "awsinstancepath2"
           },
-        ]}))
+        ], 
+        "InstanceJobs": []
+        }))
 
         result = list(m.GetS3Documents())
         self.assertEqual(result[0]["Name"], "document1")
@@ -103,31 +115,53 @@ class Manifest_Test(unittest.TestCase):
         self.assertEqual(result[2]["AWSInstancePath"], "awsinstancepath2")
 
     def test_GetS3DocumentsReturnsFilteredDocuments(self):
-        m = Manifest(self.writeTestJsonFile({
-        "Documents": [
-          {
-            "Name": "document1",
-            "Direction": "LocalToAWS",
-            "LocalPath": ".",
-            "AWSInstancePath": "awsinstancepath"
-          },
-          {
-            "Name": "document2",
-            "Direction": "AWSToLocal",
-            "LocalPath": ".",
-            "AWSInstancePath": "awsinstancepath"
-          },
-          {
-            "Name": "document3",
-            "Direction": "LocalToAWS",
-            "LocalPath": ".",
-            "AWSInstancePath": "awsinstancepath"
-          },
-        ]}))
+        m = Manifest(self.writeTestJsonFile(
+            {
+            "ProjectName": "projectname",
+            "BucketName": "bucket",
+            "Documents": [
+              {
+                "Name": "document1",
+                "Direction": "LocalToAWS",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+              {
+                "Name": "document2",
+                "Direction": "AWSToLocal",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+              {
+                "Name": "document3",
+                "Direction": "LocalToAWS",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              }],
+              "InstanceJobs": []
+        }))
 
         result = list(m.GetS3Documents(filter={"Direction": "LocalToAWS"}))
         self.assertEqual(result[0]["Name"], "document1")
         self.assertEqual(result[1]["Name"], "document3")
+
+    def test_errorThrownOnMissingJsonKeys(self):
+        self.assertRaises(ValueError, 
+            lambda: Manifest(self.writeTestJsonFile(
+            {
+                "ProjectName": "projectname"
+            })))
+
+    def test_errorThrownOnExtraJsonKeys(self):
+        self.assertRaises(ValueError, 
+            lambda: Manifest(self.writeTestJsonFile(
+            {
+                "ProjectName": "projectname",
+                "BucketName": "myBucketName",
+                "Documents":[],
+                "InstanceJobs": [],
+                "extra": 1
+            })))
 
     def test_errorThrownOnDuplicateDocumentNames(self):
         self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
@@ -146,9 +180,40 @@ class Manifest_Test(unittest.TestCase):
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
-            ]})))
+            ],"InstanceJobs": []})))
 
     def test_errorThrownOnDuplicateJobIds(self):
+        self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
+            "ProjectName": "testProject",
+            "BucketName": "bucket",
+            "Documents": [
+              {
+                "Name": "document1",
+                "Direction": "AWSToLocal",
+                "LocalPath": "mylocalPath",
+                "AWSInstancePath": "awsinstancepath"
+              },
+              {
+                "Name": "document2",
+                "Direction": "AWSToLocal",
+                "LocalPath": "mylocalPath",
+                "AWSInstancePath": "awsinstancepath"
+              }
+            ],
+            "InstanceJobs": [
+            {
+              "Id": 1,
+              "RequiredS3Data": [ "document1" ],
+              "Commands": [{ "Command": "run.exe", "Args": [ ] } ]
+            },
+            {
+              "Id": 1,
+              "RequiredS3Data": [ "document2" ],
+              "Commands": [{ "Command": "run.exe", "Args": [ ] } ]
+            }
+            ]})))
+
+    def test_errorThrownOnDuplicateDocumentReferenceInJob(self):
         self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
             "ProjectName": "testProject",
             "BucketName": "bucket",
@@ -163,11 +228,31 @@ class Manifest_Test(unittest.TestCase):
             "InstanceJobs": [
             {
               "Id": 1,
-              "RequiredS3Data": [ "document" ],
+              "RequiredS3Data": [ "document", "document" ],
+              "Commands": [{ "Command": "run.exe", "Args": [ ] } ]
+            }
+            ]})))
+
+    def test_errorThrownOnMultipleJobsReferencingSameAWSToLocalDoc(self):
+        self.assertRaises(ValueError, lambda: Manifest(self.writeTestJsonFile({
+            "ProjectName": "testProject",
+            "BucketName": "bucket",
+            "Documents": [
+              {
+                "Name": "document",
+                "Direction": "AWSToLocal",
+                "LocalPath": "mylocalPath",
+                "AWSInstancePath": "awsinstancepath"
+              },
+            ],
+            "InstanceJobs": [
+            {
+              "Id": 1,
+              "RequiredS3Data": [ "document", ],
               "Commands": [{ "Command": "run.exe", "Args": [ ] } ]
             },
             {
-              "Id": 1,
+              "Id": 2,
               "RequiredS3Data": [ "document" ],
               "Commands": [{ "Command": "run.exe", "Args": [ ] } ]
             }
@@ -200,7 +285,7 @@ class Manifest_Test(unittest.TestCase):
             "Documents": [
               {
                 "Name": "document",
-                "Direction": "AWSToLocal",
+                "Direction": "LocalToAWS",
                 "LocalPath": "mylocalPath",
                 "AWSInstancePath": "awsinstancepath"
               },
@@ -230,7 +315,7 @@ class Manifest_Test(unittest.TestCase):
             "Documents": [
               {
                 "Name": "document1",
-                "Direction": "AWSToLocal",
+                "Direction": "Static",
                 "LocalPath": ".",
                 "AWSInstancePath": "awsinstancepath"
               },

@@ -1,4 +1,4 @@
-import json, os
+import json, os, logging
 from sets import Set
 
 class Manifest(object):
@@ -11,11 +11,59 @@ class Manifest(object):
         ]
         with open(manifestPath) as f:
             self.data = json.load(f)
+        logging.info("validating manifest")
+        self.__checkBasicFormat()
         s = self.__checkForDuplicateDocumentNames()
         self.__checkForDuplicateJobIds()
         self.__checkForMissingDocumentReferencedInJob(s)
+        self.__checkAWSToLocalJobsReferences()
+
+    def __checkBasicFormat(self):
+        expectedKeys = set([
+            "ProjectName",
+            "BucketName",
+            "Documents",
+            "InstanceJobs" ])
+
+        foundKeys = set(self.data.keys())
+        if expectedKeys != foundKeys:
+            raise ValueError("expected {0} sections in config, found {1}"
+                .format(expectedKeys, foundKeys))
+
+    def __checkAWSToLocalJobsReferences(self):
+        '''
+        If any 2 or more instances refer to the same AWSToLocal document, this
+        is troublesome, since each of the instances will be writing, and or
+        overwriting the same s3-key
+        '''
+        jobs = self.GetJobs()
+        if len(jobs) == 0:
+            return
+        #collect AWSToLocal docs
+        docs = set([x["Name"] for x in self.GetS3Documents(filter = {"Direction": "AWSToLocal"})])
+        docset = set([])
+        for j in jobs:
+            jobdocs = j["RequiredS3Data"]
+            #check if the same name appears 2 times in the same job, which is also an error
+            if len(set(jobdocs)) != len(jobdocs):
+                raise ValueError(
+                    "duplicate required document name(s) detected in job {0}"
+                    .format(j["Id"]))
+            for docname in jobdocs:
+                if docname not in docs:
+                    continue # not an AWSToLocal job, multiple references are fine
+                if docname in docset:
+                    #the docname refers to an AWSToLocal document, and it was referenced in at least one other job
+                    raise ValueError("AWSToLocal document '{0}' found in more than one job".format(docname))
+                else:
+                    docset.add(docname)
+
+
 
     def __checkForDuplicateDocumentNames(self):
+        '''
+        do not allow the same document name to appear twice in the manifest
+        '''
         s = Set([])
         if "Documents" in self.data:
             for doc in self.data["Documents"]:
@@ -28,6 +76,9 @@ class Manifest(object):
         return s
 
     def __checkForDuplicateJobIds(self):
+        '''
+        do not allow the same job id to appear twice in the manifest
+        '''
         s = Set([])
         if "InstanceJobs" in self.data:
             for job in self.data["InstanceJobs"]:
@@ -76,7 +127,7 @@ class Manifest(object):
         return matches
 
     def GetJob(self, instanceId):
-        """get the job to run on this instance"""
+        """get the job to run on the specified instance"""
         for job in self.data["InstanceJobs"]:
             if instanceId == job["Id"]:
                 return job
