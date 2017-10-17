@@ -21,6 +21,11 @@ class Application(object):
                                                 os.path.abspath(doc["LocalPath"]))
         logging.info("downloading finished")
 
+    def downloadLogs(self, outputdir):
+        logging.info("downloading instance logs s3 bucket {0}".format(self.s3interface.bucketName))
+        for j in self.manifest.GetJobs():
+            self.instanceManager.downloadInstanceLog(j["Id"], outputdir)
+
     def uploadS3Documents(self):
         logging.info("uploading files to s3 bucket {0}".format(self.s3interface.bucketName))
         logging.info("uploading manifest {0} to {1}".format(self.manifestPath, self.manifestKey))

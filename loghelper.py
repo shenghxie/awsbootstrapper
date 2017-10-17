@@ -9,11 +9,6 @@ class LogHelper(object):
         #
         rootLogger = logging.getLogger()
 
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-            datefmt='%m-%d %H:%M')
-        rootLogger.removeHandler(rootLogger.handlers[0]) #remove the basic handler
         logFormatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s', datefmt='%m-%d %H:%M')
 
         fileHandler = logging.FileHandler(fn, fmode)
