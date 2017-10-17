@@ -8,6 +8,7 @@ def main():
         description="AWS bootstrapper log downloader" +
                     "Downloads instances logs from AWS S3")
     parser.add_argument("--manifestPath", help = "path to a manifest file describing the jobs and data requirements for the application", required=True)
+    parser.add_argument("--outputPath", help = "directory to where instance logs will be copied", required=True)
 
     try:
         args = vars(parser.parse_args())
