@@ -1,4 +1,4 @@
-import boto3, argparse, os, sys
+import boto3, argparse, os, sys, logging
 from instancemanager import InstanceManager
 from application import Application
 from loghelper import LogHelper
@@ -19,7 +19,7 @@ def main():
         app.downloadLogs(outputdir)
 
     except Exception as ex:
-        logging.exception("error in downloader")
+        logging.exception("error in log downloader")
         sys.exit(1)
 
 if __name__ == "__main__":
