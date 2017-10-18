@@ -1,4 +1,5 @@
 import json, os
+from instancemetadata import InstanceMetadata
 from loghelper import LogHelper
 class InstanceManager(object):
 
@@ -7,28 +8,40 @@ class InstanceManager(object):
         self.manifest = manifest
         self.__metadataFileName = "metadata.json"
 
-    def GetMetadata(self, instance):
-        return {
-            "instance_id": instance.instance_id,
-            #"launch_time": instance.launch_time,
-        }
-
     def GetKeyPrefix(self, instanceId):
         return "/".join([self.manifest.GetS3KeyPrefix(),
                          "instances",str(instanceId)])
 
-    def publishInstance(self, instanceId, instance):
+    def GetMetaFileTempPath(self, instanceId):
+        localMetaFile = os.path.join(self.s3Interface.localTempDir, 
+                                "instance_metadata{0}.json"
+                                .format(instanceId))
+
+    def publishInstance(self, instanceId, awsInstanceId):
         """called at the moment that an instance is created
         uploads instance metadata to s3"""
 
-        localMetaFile = os.path.join(self.s3Interface.localTempDir, 
-                                     "instance_metadata{0}.json"
-                                     .format(instanceId))
-        metadata = self.GetMetadata(instance)
-        with open(localMetaFile, 'w') as f:
-            f.write(json.dumps(metadata))
-        self.uploadInstanceData(instanceId, self.__metadataFileName, localMetaFile)
+        localMetaFile = GetMetaFileTempPath()
+        metadata = InstanceMetadata.Initialize(instanceId,
+                                               awsInstanceId,
+                                               self.manifest)
+        InstanceMetadata.ToJson(metadata, localMetaFile)
+        self.uploadInstanceData(instanceId, self.__metadataFileName,
+                                localMetaFile)
         os.remove(localMetaFile)
+
+    def downloadMetaData(self, instanceId):
+        localMetaFile = GetMetaFileTempPath()
+        self.downloadInstanceData(instanceId, self.__metadataFileName,
+                                  localMetaFile, False)
+        inst = InstanceMetadata.FromJson(localMetaFile)
+        os.remove(localMetaFile)
+
+    def uploadMetaData(self, metadata):
+        localMetaFile = GetMetaFileTempPath()
+        InstanceMetadata.ToJson(metadata, localMetaFile)
+        self.uploadInstanceData(metadata.Get("Id"),
+                                self.__metadataFileName, localMetaFile, False)
 
     def uploadInstanceLog(self, instanceId):
         """

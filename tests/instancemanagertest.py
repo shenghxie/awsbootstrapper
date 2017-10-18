@@ -14,14 +14,14 @@ class InstanceManager_Test(unittest.TestCase):
         self.assertTrue(inst.manifest == mockManifest)
         self.assertTrue(inst.s3Interface == mockS3Interface)
 
-    def test_GetMetadata(self):
-        mockManifest = Mock(spec=Manifest)
-        mockS3Interface = Mock(spec=S3Interface)
-        inst = InstanceManager(mockS3Interface, mockManifest)
-        ec2inst = Mock(spec=EC2Interface)
-        ec2inst.instance_id = "999"
+    def test_GetMetaFileTempPath(self):
+        self.assertTrue(False)
 
-        self.assertTrue( inst.GetMetadata(ec2inst) == { "instance_id": "999" })
+    def test_downloadMetaData(self):
+        self.assertTrue(False)
+
+    def test_uploadMetaData(self):
+        self.assertTrue(False)
 
     def test_GetKeyPrefix(self):
         mockManifest = Mock(spec=Manifest)
@@ -38,6 +38,10 @@ class InstanceManager_Test(unittest.TestCase):
             mockManifest = Mock(spec=Manifest)
             mockS3Interface = Mock(spec=S3Interface)
             mockec2inst = Mock(spec=EC2Interface)
+
+            #todo: add test to confirm InstanceMetadata static methods are used
+            self.assertFalse(True)
+
             mockec2inst.instance_id = "100"
             mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
 

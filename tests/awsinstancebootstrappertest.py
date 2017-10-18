@@ -3,6 +3,7 @@ from mock import Mock, call
 from awsinstancebootstrapper import AWSInstanceBootStrapper
 from manifest import Manifest
 from instancemanager import InstanceManager
+from instancemetadata import InstanceMetadata
 from s3interface import S3Interface
 
 class AWSInstanceBootStrapper_Test(unittest.TestCase):
@@ -11,12 +12,14 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         m = Mock(spec=Manifest)
         i = Mock(spec=InstanceManager)
         s = Mock(spec=S3Interface)
+        im = Mock(spec=InstanceMetadata)
         m.GetJob.return_value = { "RequiredS3Data": "abcd" }
-        a = AWSInstanceBootStrapper(1, m, s, i)
+        a = AWSInstanceBootStrapper(1, m, s, i, im)
         self.assertEqual(a.instanceId, 1)
         self.assertEqual(a.manifest, m)
         self.assertEqual(a.s3interface, s)
         self.assertEqual(a.instancemanager, i)
+        self.assertEqual(a.metadata, im)
         self.assertEqual(a.job, { "RequiredS3Data": "abcd" })
         
         m.GetJob.assert_called_once_with(1)
@@ -26,16 +29,18 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         m.GetJob.return_value = { "RequiredS3Data": "a" }
         i = Mock(spec=InstanceManager)
         s = Mock(spec=S3Interface)
-        a = AWSInstanceBootStrapper(100, m, s, i)
-        a.UploadLog()
+        im = Mock(spec=InstanceMetadata)
+        a = AWSInstanceBootStrapper(100, m, s, i, im)
+        a.UploadStatus()
         i.uploadInstanceLog.assert_called_once_with(100)
+        i.uploadMetaData.assert_called_once_with(im)
         m.GetJob.assert_called_once_with(100)
 
     def test_DownloadS3Documents(self):
         m = Mock(spec=Manifest)
         s = Mock(spec=S3Interface)
         i = Mock(spec=InstanceManager)
-
+        im = Mock(spec=InstanceMetadata)
         m.GetJob.return_value = { "RequiredS3Data": ["doc1", "doc2", "doc3" ] }
         directions = {
             "doc1": "LocalToAWS", 
@@ -52,20 +57,22 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         ]
         m.GetS3KeyPrefix.return_value = "prefix"
 
-        a = AWSInstanceBootStrapper(999, m, s, i)
+        a = AWSInstanceBootStrapper(999, m, s, i, im)
         a.DownloadS3Documents()
         self.assertEqual(s.downloadCompressed.call_count, 2)
         s.downloadCompressed.assert_has_calls([
             call("prefix", "doc1", "{0}AWSInstancePath".format("doc1")),
             call("prefix", "doc3", "{0}AWSInstancePath".format("doc3"))
             ])
-
+        im.uploadMetaData.assert_any_call()
         i.uploadInstanceLog.assert_any_call(999)
 
     def test_RunCommands(self):
         m = Mock(spec=Manifest)
         s = Mock(spec=S3Interface)
         i = Mock(spec=InstanceManager)
+        im = Mock(spec=InstanceMetadata)
+        
         m.GetJob.return_value = {
             "RequiredS3Data": ["doc1", "doc2", "doc3" ],
             "Commands": [
@@ -76,15 +83,18 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
             ]
         }
 
-        a = AWSInstanceBootStrapper(9999, m, s, i)
+        a = AWSInstanceBootStrapper(9999, m, s, i, im)
         result = a.RunCommands()
         self.assertTrue(result)
+        im.UpdateMessage.assert_called()
         i.uploadInstanceLog.assert_any_call(9999)
+        i.uploadMetaData.assert_any_call(im)
 
     def test_RunCommandReturnsFalseAndUploadsLogOnInvalidCommand(self):
         m = Mock(spec=Manifest)
         s = Mock(spec=S3Interface)
         i = Mock(spec=InstanceManager)
+        im = Mock(spec=InstanceMetadata)
 
         m.GetJob.return_value = {
                 "RequiredS3Data": ["doc1", "doc2", "doc3" ],
@@ -96,15 +106,15 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
                 ]
             }
 
-        a = AWSInstanceBootStrapper(77, m, s, i)
+        a = AWSInstanceBootStrapper(77, m, s, i, im)
         self.assertRaises(Exception, a.RunCommands)
         i.uploadInstanceLog.assert_any_call(77)
-        
 
     def test_UploadS3Documents(self):
         m = Mock(spec=Manifest)
         s = Mock(spec=S3Interface)
         i = Mock(spec=InstanceManager)
+        im = Mock(spec=InstanceMetadata)
 
         m.GetJob.return_value = { "RequiredS3Data": ["doc1", "doc2", "doc3", "doc4" ]}
         directions = {
@@ -131,6 +141,8 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
             call("prefix", "doc4", "{0}AWSInstancePath".format("doc4"))
             ])
         i.uploadInstanceLog.assert_any_call(101)
+        im.UpdateMessage.assert_called()
+        i.uploadMetaData.assert_any_call(im)
         #self.assertTrue(self.uploadCompressedWasCalled)
         #self.assertTrue(self.uploadLogCalled)
 

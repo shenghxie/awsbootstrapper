@@ -108,6 +108,7 @@ class EC2Interface(object):
             instance = self.launchInstance(config)
             instances[id] = instance
             ordered_instance_ids.append(id)
+            self.instanceManager.publishInstance(id, instances[i].instance_id)
 
         allRunning = False
         for i in ordered_instance_ids:
@@ -116,5 +117,4 @@ class EC2Interface(object):
                 Tags=[
                     { "Key": "Name", "Value": "{0}[{1}]".format(self.manifest.GetS3KeyPrefix(), i)}
                 ])
-            self.instanceManager.publishInstance(i, instances[i])
             logging.info("instance {0} successfully created AWS ID: {1}".format(i, instances[i].instance_id))

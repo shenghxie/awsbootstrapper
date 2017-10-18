@@ -7,7 +7,7 @@ class AWSInstanceBootStrapper(object):
     s3 accordingly, and then runs specified commands depending on the instance
     id
     """
-    def __init__(self, instanceId, manifest, s3interface, instancemanager):
+    def __init__(self, instanceId, manifest, s3interface, instancemanager, metadata):
         """Initialize AWSInstanceBootStrapper.
 
         Args:
@@ -20,35 +20,38 @@ class AWSInstanceBootStrapper(object):
         self.manifest = manifest
         self.s3interface = s3interface
         self.instancemanager = instancemanager
+        self.metadata = metadata
         self.job = self.manifest.GetJob(self.instanceId)
         self.requiredS3Docs = self.job["RequiredS3Data"]
 
-    def UploadLog(self):
+    def UploadStatus(self):
         """Uploads the log file to S3"""
         self.instancemanager.uploadInstanceLog(self.instanceId)
+        self.instancemanager.uploadMetaData(self.metadata)
 
     def DownloadS3Documents(self):
         """ Downloads documents specified as required for this instance in the
         manifest
         """
-        try:
-            for documentName in self.requiredS3Docs:
-                documentData = self.manifest.GetS3Documents(
-                    filter={ "Name": documentName })[0]
-                # [0] because only one document will match because 
-                # Name is constrained as a unique identifier
+        for documentName in self.requiredS3Docs:
+            documentData = self.manifest.GetS3Documents(
+                filter={ "Name": documentName })[0]
+            # [0] because only one document will match because 
+            # Name is constrained as a unique identifier
 
-                #AWSInstance path is the local path on an instance
-                localPath = documentData["AWSInstancePath"]
-                docName = documentData["Name"]
-                keyPrefix = self.manifest.GetS3KeyPrefix()
+            #AWSInstance path is the local path on an instance
+            localPath = documentData["AWSInstancePath"]
+            keyPrefix = self.manifest.GetS3KeyPrefix()
 
-                direction = documentData["Direction"]
-                if direction in ["LocalToAWS", "Static"]:
-                    self.s3interface.downloadCompressed(keyPrefix, docName, localPath)
-        finally:
-            #upload the log after the s3downloads (which will have made log entries)
-            self.UploadLog()
+            direction = documentData["Direction"]
+            if direction in ["LocalToAWS", "Static"]:
+                self.metadata.UpdateMessage("Downloading '{0}'"
+                                            .format(documentName))
+                self.UploadStatus()
+                self.s3interface.downloadCompressed(
+                    keyPrefix, documentName, localPath)
+                self.metadata.IncrementDownloadFinished()
+                self.UploadStatus()
 
     def RunCommands(self):
         """Run the commands specified for this instance in the manifest.
@@ -65,13 +68,15 @@ class AWSInstanceBootStrapper(object):
             try:
                 # http://stackoverflow.com/questions/16198546/get-exit-code-and-stderr-from-subprocess-call
                 logging.info("issuing command: {0}".format(command))
-                self.UploadLog()
+                self.metadata.UpdateMessage("Running command '{0}'".format(command))
+                self.UploadStatus()
                 cmnd_output = subprocess.check_output(command, 
                                                       stderr=subprocess.STDOUT,
                                                       shell=False, 
                                                       universal_newlines=True);
                 logging.info("command executed successfully")
-                self.UploadLog()
+                self.metadata.IncrementCommandFinished()
+                self.UploadStatus()
             except subprocess.CalledProcessError as cp_ex:
                 logging.exception("error occurred running command")
                 logging.error(cp_ex.output)
@@ -80,7 +85,7 @@ class AWSInstanceBootStrapper(object):
                 logging.exception("error occurred running command")
                 raise ex
             finally:
-                self.UploadLog()
+                self.UploadStatus()
 
         return True
 
@@ -88,24 +93,24 @@ class AWSInstanceBootStrapper(object):
         """Upload the documents from this instance to S3 that are specified in
         the manifest as required for this instance
         """
-        try:
-            for documentName in self.requiredS3Docs:
-                documentData = self.manifest.GetS3Documents(
-                    filter={ "Name": documentName })[0]
-                # [0] because exactly one document should match because 
-                # Name is constrained as a unique identifier
+        for documentName in self.requiredS3Docs:
+            documentData = self.manifest.GetS3Documents(
+                filter={ "Name": documentName })[0]
+            # [0] because exactly one document should match because 
+            # Name is constrained as a unique identifier
 
-                #AWSInstance path is the local path on an instance
-                localPath = documentData["AWSInstancePath"]
-                docName = documentData["Name"]
-                keyPrefix = self.manifest.GetS3KeyPrefix()
+            #AWSInstance path is the local path on an instance
+            localPath = documentData["AWSInstancePath"]
+            keyPrefix = self.manifest.GetS3KeyPrefix()
 
-                direction = documentData["Direction"]
-                if direction in ["AWSToLocal"]:
-                    self.s3interface.uploadCompressed(keyPrefix, docName, localPath)
-        finally:
-            #upload the log after the s3 uploads (which will have made log entries)
-            self.UploadLog()
+            direction = documentData["Direction"]
+            if direction in ["AWSToLocal"]:
+                self.metadata.UpdateMessage("Uploading '{0}'"
+                    .format(documentName))
+                self.UploadStatus()
+                self.s3interface.uploadCompressed(keyPrefix, documentName, localPath)
+                self.metadata.IncrementUploadsFinished()
+                self.UploadStatus()
 
 def main():
     """to be run on by each instance as a startup command"""
@@ -115,6 +120,7 @@ def main():
     from s3interface import S3Interface
     from manifest import Manifest
     from instancemanager import InstanceManager
+    from instancemetadata import InstanceMetadata
     from loghelper import LogHelper
     parser = argparse.ArgumentParser(
         description="AWS Instance bootstrapper" +
@@ -152,17 +158,19 @@ def main():
         s3interface.downloadFile(manifestKey, localManifestPath)
         manifest = Manifest(localManifestPath)
         instancemanager = InstanceManager(s3interface, manifest)
+        metadata = instancemanager.downloadMetaData(instanceId)
         bootstrapper = AWSInstanceBootStrapper(instanceId,
                                                manifest, 
                                                s3interface, 
-                                               instancemanager)
+                                               instancemanager,
+                                               metadata)
         bootstrapper.DownloadS3Documents()
         bootstrapper.RunCommands()
         bootstrapper.UploadS3Documents()
     except Exception as ex:
         logging.exception("error in bootstrapper")
         if bootstrapper is not None:
-            bootstrapper.UploadLog()
+            bootstrapper.UploadStatus()
         sys.exit(1)
 
 if __name__ == "__main__":
