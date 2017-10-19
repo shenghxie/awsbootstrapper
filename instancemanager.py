@@ -16,6 +16,7 @@ class InstanceManager(object):
         localMetaFile = os.path.join(self.s3Interface.localTempDir, 
                                 "instance_metadata{0}.json"
                                 .format(instanceId))
+        return localMetaFile
 
     def publishInstance(self, instanceId, awsInstanceId):
         """called at the moment that an instance is created

@@ -64,7 +64,7 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
             call("prefix", "doc1", "{0}AWSInstancePath".format("doc1")),
             call("prefix", "doc3", "{0}AWSInstancePath".format("doc3"))
             ])
-        im.uploadMetaData.assert_any_call()
+        i.uploadMetaData.assert_called()
         i.uploadInstanceLog.assert_any_call(999)
 
     def test_RunCommands(self):
@@ -134,7 +134,7 @@ class AWSInstanceBootStrapper_Test(unittest.TestCase):
         
         m.GetS3KeyPrefix.return_value = "prefix"
 
-        a = AWSInstanceBootStrapper(101, m, s, i)
+        a = AWSInstanceBootStrapper(101, m, s, i, im)
         a.UploadS3Documents()
         s.uploadCompressed.assert_has_calls([
             call("prefix", "doc2", "{0}AWSInstancePath".format("doc2")),

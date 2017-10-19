@@ -15,10 +15,21 @@ class InstanceManager_Test(unittest.TestCase):
         self.assertTrue(inst.s3Interface == mockS3Interface)
 
     def test_GetMetaFileTempPath(self):
-        self.assertTrue(False)
+        mockManifest = Mock(spec=Manifest)
+        mockS3Interface = Mock(spec=S3Interface)
+        mockS3Interface.localTempDir = "temp123"
+        inst = InstanceManager(mockS3Interface, mockManifest)
+        result = inst.GetMetaFileTempPath(10)
+        self.assertEqual(result,
+                         os.path.join("temp123","instance_metadata10.json"))
 
     def test_downloadMetaData(self):
+        mockManifest = Mock(spec=Manifest)
+        mockS3Interface = Mock(spec=S3Interface)
+        mockS3Interface.localTempDir = "temp_dir"
+        inst = InstanceManager(mockS3Interface, mockManifest)
         self.assertTrue(False)
+
 
     def test_uploadMetaData(self):
         self.assertTrue(False)
