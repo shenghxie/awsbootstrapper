@@ -1,9 +1,8 @@
-import unittest, os, shutil
+import unittest, os
 from instancemanager import InstanceManager
 from mock import Mock, call
 from s3interface import S3Interface
 from manifest import Manifest
-from ec2interface import EC2Interface
 from instancemetadatafactory import InstanceMetadataFactory
 from instancemetadata import InstanceMetadata
 

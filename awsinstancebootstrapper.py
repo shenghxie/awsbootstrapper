@@ -120,7 +120,7 @@ def main():
     from s3interface import S3Interface
     from manifest import Manifest
     from instancemanager import InstanceManager
-    from instancemetadata import InstanceMetadata
+    from instancemetadatafactory import InstanceMetadataFactory
     from loghelper import LogHelper
     parser = argparse.ArgumentParser(
         description="AWS Instance bootstrapper" +
@@ -157,7 +157,8 @@ def main():
         logging.info("downloading manifest from S3")
         s3interface.downloadFile(manifestKey, localManifestPath)
         manifest = Manifest(localManifestPath)
-        instancemanager = InstanceManager(s3interface, manifest)
+        metafac = InstanceMetadataFactory(manifest)
+        instancemanager = InstanceManager(s3interface, manifest, metafac)
         metadata = instancemanager.downloadMetaData(instanceId)
         bootstrapper = AWSInstanceBootStrapper(instanceId,
                                                manifest, 

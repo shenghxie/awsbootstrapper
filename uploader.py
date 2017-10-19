@@ -1,4 +1,4 @@
-import boto3, logging, argparse, json, os, sys
+import boto3, logging, argparse, os, sys
 from application import Application
 from loghelper import LogHelper
 

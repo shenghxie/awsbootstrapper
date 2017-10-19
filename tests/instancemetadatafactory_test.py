@@ -1,5 +1,5 @@
-from mock import Mock, call
-import unittest, os, shutil, json
+from mock import Mock
+import unittest, os, json
 from timehelper import TimeHelper
 from manifest import Manifest
 from instancemetadatafactory import InstanceMetadataFactory

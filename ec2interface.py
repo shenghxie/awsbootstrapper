@@ -1,5 +1,4 @@
-import os, logging
-from manifest import Manifest
+import logging
 class EC2Interface(object):
     
     def __init__(self, ec2Resource, instanceLocalWorkingDir, manifest, 

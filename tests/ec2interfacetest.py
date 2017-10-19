@@ -2,7 +2,7 @@ import unittest
 from ec2interface import EC2Interface
 from manifest import Manifest
 from instancemanager import InstanceManager
-from mock import Mock, call
+from mock import Mock
 
 class MockEC2Instance(object):
     '''

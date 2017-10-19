@@ -1,5 +1,4 @@
 import boto3, argparse, os, sys, logging
-from instancemanager import InstanceManager
 from application import Application
 from loghelper import LogHelper
 def main():

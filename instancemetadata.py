@@ -1,6 +1,3 @@
-import json
-import datetime
-from manifest import Manifest
 from timehelper import TimeHelper
 class InstanceMetadata(object):
 

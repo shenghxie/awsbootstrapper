@@ -1,7 +1,5 @@
-from mock import Mock, call
 import unittest
 from instancemetadata import InstanceMetadata
-from manifest import Manifest
 from timehelper import TimeHelper
 
 class InstanceMetadata_Test(unittest.TestCase):

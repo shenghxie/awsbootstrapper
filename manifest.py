@@ -1,4 +1,4 @@
-import json, os, logging
+import json, logging
 from sets import Set
 
 class Manifest(object):

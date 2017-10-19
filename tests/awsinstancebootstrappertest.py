@@ -1,4 +1,4 @@
-import unittest, subprocess, os
+import unittest
 from mock import Mock, call
 from awsinstancebootstrapper import AWSInstanceBootStrapper
 from manifest import Manifest

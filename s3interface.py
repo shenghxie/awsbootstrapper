@@ -1,4 +1,4 @@
-import os, sys, shutil, zipfile, logging
+import os, shutil, zipfile, logging
 
 class S3Interface(object):
 

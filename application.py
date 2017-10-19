@@ -3,14 +3,15 @@ from ec2interface import EC2Interface
 from s3interface import S3Interface
 from manifest import Manifest
 from instancemanager import InstanceManager
-
+from instancemetadatafactory import InstanceMetadataFactory
 class Application(object):
     
     def __init__(self, s3, manifestPath, localWorkingDir):
         self.manifestPath = manifestPath
         self.manifest = Manifest(manifestPath)
         self.s3interface = S3Interface(s3, self.manifest.GetBucketName(), localWorkingDir)
-        self.instanceManager = InstanceManager(self.s3interface, self.manifest)
+        metafac = InstanceMetadataFactory(self.manifest)
+        self.instanceManager = InstanceManager(self.s3interface, self.manifest, metafac)
         self.manifestKey = "/".join([self.manifest.GetS3KeyPrefix(), "manifest.json"])
 
     def downloadS3Documents(self):

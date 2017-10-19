@@ -1,5 +1,4 @@
-import json, os
-from instancemetadatafactory import InstanceMetadataFactory
+import os
 from loghelper import LogHelper
 class InstanceManager(object):
 
