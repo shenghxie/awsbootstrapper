@@ -109,8 +109,13 @@ class EC2Interface_Test(unittest.TestCase):
                 "InstanceInitiatedShutdownBehavior": "InstanceInitiatedShutdownBehavior"
         }
 
+        def create_tags_override(Tags):
+            self.assertTrue(Tags[0]["Key"] == "Name")
+            self.assertTrue(Tags[0]["Value"] in ["prefix[1]","prefix[2]","prefix[3]"])
+        
         def create_instances(**args):
             i = MockEC2Instance()
+            i.create_tags_override = create_tags_override
             for k,v in self.args.iteritems():
                 if k != "UserData":
                     self.assertTrue(args[k] == v)
@@ -127,9 +132,9 @@ class EC2Interface_Test(unittest.TestCase):
 
         instanceManager = Mock(spec = InstanceManager)
 
-        instanceManager.publishInstance.side_effect = lambda id, instance : (
+        instanceManager.publishInstance.side_effect = lambda id, aws_instance_id : (
             self.assertTrue(id in [1,2,3]),
-            self.assertTrue(instance.Tags == [{'Key': 'Name', 'Value': 'prefix[{0}]'.format(id)}])
+            self.assertTrue(aws_instance_id == 1) #instance.Tags == [{'Key': 'Name', 'Value': 'prefix[{0}]'.format(id)}])
         )
 
         ec2interface = EC2Interface(
@@ -142,7 +147,6 @@ class EC2Interface_Test(unittest.TestCase):
             bootstrapScriptPath = "/path/to/script.py",
             lineBreak = "\n",
             bootstrapCommands = ["$BootStrapScript", "extraCommand"])
-
 
         ec2interface.launchInstances(self.args)
         instanceManager.publishInstance.assert_called()

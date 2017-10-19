@@ -4,76 +4,124 @@ from mock import Mock, call
 from s3interface import S3Interface
 from manifest import Manifest
 from ec2interface import EC2Interface
+from instancemetadatafactory import InstanceMetadataFactory
+from instancemetadata import InstanceMetadata
 
 class InstanceManager_Test(unittest.TestCase):
 
     def test_constructor(self):
         mockManifest = Mock(spec=Manifest)
         mockS3Interface = Mock(spec=S3Interface)
-        inst = InstanceManager(mockS3Interface, mockManifest)
+        mockInstanceMetaFac = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest, mockInstanceMetaFac)
         self.assertTrue(inst.manifest == mockManifest)
         self.assertTrue(inst.s3Interface == mockS3Interface)
+        self.assertTrue(inst.instanceMetadataFactory == mockInstanceMetaFac)
 
     def test_GetMetaFileTempPath(self):
         mockManifest = Mock(spec=Manifest)
         mockS3Interface = Mock(spec=S3Interface)
         mockS3Interface.localTempDir = "temp123"
-        inst = InstanceManager(mockS3Interface, mockManifest)
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
         result = inst.GetMetaFileTempPath(10)
         self.assertEqual(result,
                          os.path.join("temp123","instance_metadata10.json"))
 
     def test_downloadMetaData(self):
         mockManifest = Mock(spec=Manifest)
+        mockManifest.GetS3KeyPrefix.side_effect = lambda : ""
         mockS3Interface = Mock(spec=S3Interface)
-        mockS3Interface.localTempDir = "temp_dir"
-        inst = InstanceManager(mockS3Interface, mockManifest)
-        self.assertTrue(False)
+        mockS3Interface.localTempDir = "tests"
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
+
+        mockInstanceMetadataFactory.FromJson.side_effect = \
+            lambda tmpfile : -9999
+
+        instId = 10
+        tmpfile = inst.GetMetaFileTempPath(instId)
+        with open(tmpfile, 'w') as tmp:
+            tmp.write("nothing")
+        res = inst.downloadMetaData(instId)
+
+        mockInstanceMetadataFactory.FromJson.assert_called_once_with(tmpfile)
+        self.assertTrue(res == -9999)
+        self.assertFalse(os.path.exists(tmpfile))
+        mockManifest.GetS3KeyPrefix.has_call()
+        mockS3Interface.downloadFile.has_call()
+        self.assertFalse(os.path.exists(tmpfile))
 
 
     def test_uploadMetaData(self):
-        self.assertTrue(False)
+        mockManifest = Mock(spec=Manifest)
+        mockManifest.GetS3KeyPrefix.side_effect = lambda : ""
+        mockS3Interface = Mock(spec=S3Interface)
+        mockS3Interface.localTempDir = "tests"
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        mockMetadata = Mock(spec=InstanceMetadata)
+        instId = 17
+        mockMetadata.Get.side_effect = lambda key : {"Id": instId}[key]
+
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
+
+        tmpfile = inst.GetMetaFileTempPath(instId)
+        with open(tmpfile, 'w') as tmp:
+            tmp.write("nothing")
+
+        inst.uploadMetaData(mockMetadata)
+
+        self.assertFalse(os.path.exists(tmpfile))
+        mockS3Interface.uploadFile.has_call()
+        mockInstanceMetadataFactory.ToJson.assert_any_call(mockMetadata, tmpfile)
 
     def test_GetKeyPrefix(self):
         mockManifest = Mock(spec=Manifest)
         mockS3Interface = Mock(spec=S3Interface)
-        inst = InstanceManager(mockS3Interface, mockManifest)
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
         mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
         self.assertTrue( inst.GetKeyPrefix(1000) == "the prefix/instances/1000")
         mockManifest.GetS3KeyPrefix.assert_any_call()
 
     def test_publishInstance(self):
-        tempPath = os.path.join(os.getcwd(), "tests", "temp")
-        os.makedirs(tempPath)
-        try:
-            mockManifest = Mock(spec=Manifest)
-            mockS3Interface = Mock(spec=S3Interface)
-            mockec2inst = Mock(spec=EC2Interface)
 
-            #todo: add test to confirm InstanceMetadata static methods are used
-            self.assertFalse(True)
+        mockManifest = Mock(spec=Manifest)
+        mockS3Interface = Mock(spec=S3Interface)
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
 
-            mockec2inst.instance_id = "100"
-            mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
+        mockInstanceMetadataFactory.InitializeMetadata.side_effect = \
+            lambda i, a : "metadata"
 
-            mockS3Interface.localTempDir = tempPath
+        mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
+        mockS3Interface.localTempDir = "tests"
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                                mockInstanceMetadataFactory)
+        instId = 100
+        tmpfile = inst.GetMetaFileTempPath(instId)
+        with open(tmpfile, 'w') as tmp:
+            tmp.write("nothing")
 
-            inst = InstanceManager(mockS3Interface, mockManifest)
-            inst.publishInstance(100, mockec2inst)
+        inst.publishInstance(instId, 1000)
 
-            mockManifest.GetS3KeyPrefix.assert_any_call()
-            mockS3Interface.uploadFile.assert_called_with(
-                os.path.join(tempPath, "instance_metadata{0}.json".format(100)),
-                "the prefix/instances/100/metadata.json", True)
-        finally:
-            shutil.rmtree(tempPath)
+        mockManifest.GetS3KeyPrefix.assert_any_call()
+        mockS3Interface.uploadFile.assert_called_with(
+            tmpfile, "the prefix/instances/100/metadata.json", True)
+        mockInstanceMetadataFactory.InitializeMetadata.assert_any_call(instId,1000)
+        mockInstanceMetadataFactory.ToJson.assert_any_call("metadata",tmpfile)
+        self.assertFalse(os.path.exists(tmpfile))
 
     def test_uploadInstanceData(self):
         mockManifest = Mock(spec=Manifest)
         mockS3Interface = Mock(spec=S3Interface)
         mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
-
-        inst = InstanceManager(mockS3Interface, mockManifest)
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
         inst.uploadInstanceData(10000, "docname", "localPath")
         mockManifest.GetS3KeyPrefix.assert_any_call()
         mockS3Interface.uploadFile.assert_called_with(
@@ -84,8 +132,9 @@ class InstanceManager_Test(unittest.TestCase):
         mockManifest = Mock(spec=Manifest)
         mockManifest.GetS3KeyPrefix.side_effect = lambda : "the prefix"
         mockS3Interface = Mock(spec=S3Interface)
-
-        inst = InstanceManager(mockS3Interface, mockManifest)
+        mockInstanceMetadataFactory = Mock(spec=InstanceMetadataFactory)
+        inst = InstanceManager(mockS3Interface, mockManifest,
+                               mockInstanceMetadataFactory)
         inst.uploadInstanceData(10000, "docname", "localPath")
         mockS3Interface.uploadFile.assert_has_calls(
             [call("localPath", 

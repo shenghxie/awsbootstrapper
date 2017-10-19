@@ -108,13 +108,14 @@ class EC2Interface(object):
             instance = self.launchInstance(config)
             instances[id] = instance
             ordered_instance_ids.append(id)
-            self.instanceManager.publishInstance(id, instances[i].instance_id)
+            self.instanceManager.publishInstance(id, instance.instance_id)
+            instance.create_tags(
+                Tags=[
+                    { "Key": "Name", "Value": "{0}[{1}]".format(self.manifest.GetS3KeyPrefix(), id) }
+                ])
 
         allRunning = False
         for i in ordered_instance_ids:
             instances[i].wait_until_running()
-            instances[i].create_tags(
-                Tags=[
-                    { "Key": "Name", "Value": "{0}[{1}]".format(self.manifest.GetS3KeyPrefix(), i)}
-                ])
+
             logging.info("instance {0} successfully created AWS ID: {1}".format(i, instances[i].instance_id))
