@@ -1,5 +1,5 @@
-import logging
 from jsonschema import validate
+
 
 class JsonValidator(object):
     def __init__(self, schema, json):
@@ -7,10 +7,6 @@ class JsonValidator(object):
         self.json = json
 
     def Validate(self):
-        try:
-            validate(json, schema)
-        except ValidationError as ex:
-            logging.info(ex.msg)
-            return False
+        validate(self.json, self.schema)
         return True
-
+ 
