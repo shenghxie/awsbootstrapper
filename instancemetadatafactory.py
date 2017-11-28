@@ -50,3 +50,4 @@ class InstanceMetadataFactory(object):
                 data["NUploadsFinished"],
                 data["NDownloadsFinished"])
         return inst
+
