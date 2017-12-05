@@ -126,6 +126,16 @@ class Manifest(object):
                 matches.append(doc)
         return matches
 
+    def GetInstanceS3Documents(self, instanceId):
+        job = self.GetJob(instanceId)
+        jobDocuments = job["RequiredS3Data"]
+        result = []
+        alldocs = self.GetS3Documents()
+        for doc in alldocs:
+            if doc["Name"] in jobDocuments:
+                result.append(doc)
+        return result
+
     def GetJob(self, instanceId):
         """get the job to run on the specified instance"""
         for job in self.data["InstanceJobs"]:

@@ -360,5 +360,69 @@ class Manifest_Test(unittest.TestCase):
         self.assertEqual(j3["Commands"],[{ "Command": "run3.exe", "Args": [ 1] },
                                          { "Command": "run4.exe", "Args": [ "a", "b"] }  ])
 
+    def testGetInstanceS3DocumentsReturnsExpectedValue(self):
+        m = Manifest(self.writeTestJsonFile({
+            "ProjectName": "testProject",
+            "BucketName": "bucket",
+            "Documents": [
+              {
+                "Name": "document1",
+                "Direction": "Static",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+              {
+                "Name": "document2",
+                "Direction": "LocalToAWS",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+            ],
+            "InstanceJobs": [
+            {
+              "Id": 1,
+              "RequiredS3Data": [ "document1" ],
+              "Commands": [{ "Command": "run.exe", "Args": [ 1, 2, 3] } ]
+            },
+            {
+              "Id": 2,
+              "RequiredS3Data": [ "document1" ],
+              "Commands": [{ "Command": "run2.exe", "Args": [ 3, 2, 1] } ]
+            },
+            {
+              "Id": 3,
+              "RequiredS3Data": [ "document1", "document2" ],
+              "Commands": [{ "Command": "run3.exe", "Args": [ 1] },
+                           { "Command": "run4.exe", "Args": [ "a", "b"] }  ]
+            }]}))
+        self.assertEqual(m.GetInstanceS3Documents(1),
+            [{
+                "Name": "document1",
+                "Direction": "Static",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+            }])
+        self.assertEqual(m.GetInstanceS3Documents(2),
+            [{
+                "Name": "document1",
+                "Direction": "Static",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+            }])
+        self.assertEqual(m.GetInstanceS3Documents(3),
+            [
+              {
+                "Name": "document1",
+                "Direction": "Static",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+              {
+                "Name": "document2",
+                "Direction": "LocalToAWS",
+                "LocalPath": ".",
+                "AWSInstancePath": "awsinstancepath"
+              },
+            ])
 if __name__ == '__main__':
     unittest.main()
