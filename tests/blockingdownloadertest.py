@@ -4,18 +4,16 @@ from blockingdownloader import BlockingDownloader
 from manifest import Manifest
 from instancemanager import InstanceManager
 from instancemetadata import InstanceMetadata
-from s3interface import S3Interface
+
 class BlockingDownloaderTest(unittest.TestCase):
 
     def testConstructor(self):
         manifest = Mock(spec = Manifest)
         manifest.GetJobs.return_value = [{"Id": 3},{"Id": 100}]
         instanceManager = Mock(spec = InstanceManager)
-        s3interface = Mock(spec = S3Interface)
-        b= BlockingDownloader(manifest, instanceManager, s3interface)
+        b= BlockingDownloader(manifest, instanceManager)
         self.assertEqual(b._manifest, manifest)
         self.assertEqual(b._instance_manager, instanceManager)
-        self.assertEqual(b._s3interface, s3interface)
         self.assertEqual(b._allJobIds, [3,100])
         self.assertEqual(b._activeJobs, set([3,100]))
 
@@ -23,10 +21,10 @@ class BlockingDownloaderTest(unittest.TestCase):
         manifest = Mock(spec = Manifest)
         manifest.GetJobs.return_value = [{"Id": 3},{"Id": 100}]
         instanceManager = Mock(spec = InstanceManager)
-        s3interface = Mock(spec = S3Interface)
-        b= BlockingDownloader(manifest, instanceManager, s3interface)
+        b= BlockingDownloader(manifest, instanceManager)
         b._activeJobs = set([])
-        res = b.run()
+        downloads = []
+        res = b.run(downloads)
         self.assertEqual(res, {})
 
     def test_run_with_none_finished(self):
@@ -43,9 +41,9 @@ class BlockingDownloaderTest(unittest.TestCase):
         }
         instanceManager = Mock(spec = InstanceManager)
         instanceManager.downloadMetaData.side_effect = lambda k : instanceMetadata[k]
-        s3interface = Mock(spec = S3Interface)
-        b = BlockingDownloader(manifest, instanceManager, s3interface)
-        res = b.run()
+        b = BlockingDownloader(manifest, instanceManager)
+        downloads = []
+        res = b.run(downloads)
         self.assertEqual(res,
             {
                 3: instanceMetadata3,
@@ -55,7 +53,21 @@ class BlockingDownloaderTest(unittest.TestCase):
     def test_run_with_finished(self):
         manifest = Mock(spec = Manifest)
         manifest.GetJobs.return_value = [{"Id": 3},{"Id": 100}]
-        manifest.GetInstanceS3Documents.side_effect = lambda x : []
+        expected_downloads = [
+          {
+            "Name": "document1",
+            "Direction": "LocalToAWS",
+            "LocalPath": ".",
+            "AWSInstancePath": "awsinstancepath"
+          },
+          {
+            "Name": "document2",
+            "Direction": "AWSToLocal",
+            "LocalPath": ".",
+            "AWSInstancePath": "awsinstancepath1"
+          },
+        ]
+        manifest.GetInstanceS3Documents.side_effect = lambda x : expected_downloads
 
         instanceMetadata3 = Mock(spec=InstanceMetadata)
         instanceMetadata3.AllTasksFinished.return_value = False
@@ -67,17 +79,33 @@ class BlockingDownloaderTest(unittest.TestCase):
         }
         instanceManager = Mock(spec = InstanceManager)
         instanceManager.downloadMetaData.side_effect = lambda k : instanceMetadata[k]
-        s3interface = Mock(spec = S3Interface)
-        b = BlockingDownloader(manifest, instanceManager, s3interface)
-        res = b.run()
+        b = BlockingDownloader(manifest, instanceManager)
+        downloads = []
+        res = b.run(downloads)
+        self.assertTrue(downloads == ["document2"])
         self.assertEqual(res,
             {
                 3: instanceMetadata3,
                 100: instanceMetadata100
             })
         #in subsequent called to run, id 100 is removed, check
-        res2 = b.run()
+        downloads = []
+        res2 = b.run(downloads)
+        self.assertTrue(len(downloads) == 0)
         self.assertEqual(res2,
             {
                 3: instanceMetadata3
             })
+
+        #now make the other document finished
+        downloads = []
+        instanceMetadata3.AllTasksFinished.return_value = True
+        res3 = b.run(downloads)
+        self.assertEqual(res3,{ 3: instanceMetadata3})
+        self.assertTrue(downloads == ["document2"])
+
+        #nothing left, no downloads, no results
+        downloads = []
+        res4 = b.run(downloads)
+        self.assertEqual(res4,{ })#all done
+        self.assertTrue(len(downloads) == 0)
