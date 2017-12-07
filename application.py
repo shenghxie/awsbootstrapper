@@ -14,6 +14,24 @@ class Application(object):
         self.instanceManager = InstanceManager(self.s3interface, self.manifest, metafac)
         self.manifestKey = "/".join([self.manifest.GetS3KeyPrefix(), "manifest.json"])
 
+    def downloadS3Document(self, documentName):
+        logging.info("downloading specified document '{0}'  from s3 bucket {1}"
+                     .format(documentName, self.s3interface.bucketName))
+
+        filteredDocs = list(
+            self.manifest.GetS3Documents(
+                filter = {"Name": documentName}))
+        if len(filteredDocs) == 0:
+            raise ValueError("specified document {0} not found".format(documentName))
+        elif filteredDocs[0]["Direction"] != "AWSToLocal":
+            raise ValueError("specified document not marked AWSToLocal")
+        elif len(filteredDocs)> 1:
+            raise ValueError("manifest error")
+
+        doc = filteredDocs[0]
+        self.s3interface.downloadCompressed(self.manifest.GetS3KeyPrefix(), documentName,
+                                            os.path.abspath(doc["LocalPath"]))
+
     def downloadS3Documents(self):
         logging.info("downloading files from s3 bucket {0}".format(self.s3interface.bucketName))
 

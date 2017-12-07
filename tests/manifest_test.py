@@ -145,6 +145,11 @@ class Manifest_Test(unittest.TestCase):
         self.assertEqual(result[0]["Name"], "document1")
         self.assertEqual(result[1]["Name"], "document3")
 
+        result = list(m.GetS3Documents(filter=
+                                       {"Direction": "LocalToAWS",
+                                        "Name": "document3"}))
+        self.assertEqual(result[0]["Name"], "document3")
+
     def test_errorThrownOnMissingJsonKeys(self):
         self.assertRaises(ValueError, 
             lambda: Manifest(self.writeTestJsonFile(
