@@ -19,14 +19,29 @@ class S3Interface(object):
             logging.info("uploading file '{0}' to S3 '{1}'".format(localPath, keyName))
         self.bucket.upload_file(localPath, keyName)
 
+    def make_zipfile(self, output_filename, source_dir):
+        """
+        mostly borrowed from an answer on Stack overflow
+        https://stackoverflow.com/questions/1855095/how-to-create-a-zip-archive-of-a-directory
+        """
+        relroot = os.path.abspath(source_dir)
+        with zipfile.ZipFile(output_filename, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zip:
+            for root, dirs, files in os.walk(source_dir):
+                # add directory (needed for empty dirs)
+                zip.write(root, os.path.relpath(root, relroot))
+                for file in files:
+                    filename = os.path.join(root, file)
+                    if os.path.isfile(filename): # regular files only
+                        arcname = os.path.join(os.path.relpath(root, relroot), file)
+                        zip.write(filename, arcname)
+
     def archiveFileOrDirectory(self, pathToArchive, archiveName):
         if os.path.isdir(pathToArchive):
             archivePath = os.path.join(self.localTempDir, archiveName)
             logging.info("archiving documents at '{0}' to '{1}'".format(pathToArchive, archivePath))
-            return shutil.make_archive(
-                base_name=archivePath, 
-                format=self.__format, 
-                root_dir=pathToArchive)
+            outputPath = archivePath + '.zip'
+            self.make_zipfile(outputPath, pathToArchive)
+            return outputPath;
         elif os.path.isfile(pathToArchive):
             outputPath =  os.path.join(self.localTempDir, archiveName) + "." + self.__format
             logging.info("archiving file '{0}' to '{1}'".format(pathToArchive, outputPath))

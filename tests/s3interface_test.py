@@ -94,13 +94,24 @@ class S3Interface_Test(unittest.TestCase):
         os.makedirs(extractPath)
         try:
             for i in range(1,10):
+                #add files to the zip root dir
                 with open(os.path.join(compressPath,"tempfile{0}".format(i)), 'w') as f:
                     f.write("testfile contents {0}".format(i))
+                #now add some subdirectories and files
+                subdir = os.path.join(compressPath, str(i))
+                os.makedirs(subdir)
+                with open(os.path.join(subdir,"subdir_tempfile{0}".format(i)), 'w') as f:
+                    f.write("subdir testfile contents {0}".format(i))
+
+
             name = s.archiveFileOrDirectory(compressPath, "tempfile") 
             s.unpackFileOrDirectory(name, extractPath)
             for i in range(1,10):
                 with open(os.path.join(extractPath,"tempfile{0}".format(i)), 'r') as f:
                     self.assertEqual(f.read(), "testfile contents {0}".format(i))
+                subdir = os.path.join(extractPath, str(i))
+                with open(os.path.join(subdir,"subdir_tempfile{0}".format(i)), 'r') as f:
+                    self.assertEqual(f.read(), "subdir testfile contents {0}".format(i))
         finally:
             shutil.rmtree(tempPath)
 
